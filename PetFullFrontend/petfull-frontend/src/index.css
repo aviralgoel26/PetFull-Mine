@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.field {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: 0.3s;
+}
+
+.field:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 4px #22c55e;
+}
+
+.btn-primary {
+  width: 100%;
+  background-color: #22c55e;
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #15803d;
+}
