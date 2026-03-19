@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import DonorDashboard from "./pages/DonorDashboard";
+import RecipientDashboard from "./pages/RecipientDashboard";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/donor-dashboard" element={<DonorDashboard />} />
+        <Route path="/recipient" element={<RecipientDashboard />} />
 
       </Routes>
     </Router>

@@ -44,6 +44,9 @@ public void deleteDonation(Long id) {
     public List<Donation> getDonationsByUser(Long userId) {
     return donationRepository.findByDonor_Id(userId);
 }
+public List<Donation> getAvailableDonations() {
+    return donationRepository.findByStatus("AVAILABLE");
+}
 
 
     // -------------------------------
@@ -57,9 +60,6 @@ public void deleteDonation(Long id) {
         if (!donation.getDonor().getId().equals(userId)) {
     throw new RuntimeException("Unauthorized to delete this donation");
 }
-
-        
-
         donationRepository.delete(donation);
 
     }

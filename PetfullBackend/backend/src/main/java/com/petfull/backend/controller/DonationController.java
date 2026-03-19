@@ -27,6 +27,10 @@ public class DonationController {
 public void deleteDonation(@PathVariable Long id) {
     donationService.deleteDonation(id);
 }
+@GetMapping("/available")
+public List<Donation> getAvailableDonations() {
+    return donationService.getAvailableDonations();
+}
     @PostMapping
 public Donation createDonation(
         @RequestBody Donation donation,

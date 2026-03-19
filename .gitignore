@@ -1,0 +1,9 @@
+# frontend
+petfull-frontend/node_modules
+petfull-frontend/build
+
+# backend
+petfull-backend/target
+
+# environment
+.env
