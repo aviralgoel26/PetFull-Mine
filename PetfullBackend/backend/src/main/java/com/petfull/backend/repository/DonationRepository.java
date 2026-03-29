@@ -12,4 +12,6 @@ public interface DonationRepository extends JpaRepository<Donation, Long> {
 
     // Optional (future use): filter by status
     List<Donation> findByStatus(String status);
+    //  find donations claimed by a specific recipient
+    List<Donation> findByClaimedBy_Id(Long userId);
 }

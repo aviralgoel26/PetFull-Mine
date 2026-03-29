@@ -41,6 +41,10 @@ private String videoPath;   // optional video
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 private User donor;
 
+@ManyToOne
+@JoinColumn(name = "claimed_by")
+private User claimedBy;
+
 
     // ---------- Constructors ----------
     public Donation() {}
@@ -169,5 +173,11 @@ public void setDonor(User donor) {
     this.donor = donor;
 }
 
+public User getClaimedBy() {
+    return claimedBy;
+}
 
+public void setClaimedBy(User claimedBy) {
+    this.claimedBy = claimedBy;
+}
 }

@@ -2,6 +2,8 @@ package com.petfull.backend.model;
 import jakarta.persistence.*;
 import org.springframework.aot.generate.GeneratedTypeReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name="users")
@@ -12,7 +14,7 @@ public class User {
     private String fullName;
     @Column(unique = true)
     private String email;
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private String role; /// DONOR, RECIPIENT, ADMIN
     @Column(nullable = false)

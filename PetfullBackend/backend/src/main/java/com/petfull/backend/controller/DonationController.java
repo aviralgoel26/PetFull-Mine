@@ -38,5 +38,18 @@ public Donation createDonation(
 ) {
     return donationService.createDonation(donation, userId);
 }
+@PutMapping("/claim/{id}")
+public Donation claimDonation(
+        @PathVariable Long id,
+        @RequestParam Long userId
+) {
+    return donationService.claimDonation(id, userId);
+}
+
+
+@GetMapping("/claimed")
+public List<Donation> getClaimedDonations(@RequestParam Long userId) {
+    return donationService.getClaimedDonations(userId);
+}
 
 }

@@ -63,4 +63,28 @@ public List<Donation> getAvailableDonations() {
         donationRepository.delete(donation);
 
     }
+
+    /// Clamied Donation
+    public Donation claimDonation(Long donationId, Long userId) {
+    Donation donation = donationRepository.findById(donationId)
+        .orElseThrow(() -> new RuntimeException("Donation not found"));
+
+    if (!donation.getStatus().equals("AVAILABLE")) {
+        throw new RuntimeException("Already claimed");
+    }
+
+    // TEMP: Hardcode user (since no auth yet)
+    User user = userRepository.findById(userId) // <-- change ID as needed
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+    donation.setStatus("CLAIMED");
+    donation.setClaimedBy(user);
+
+    return donationRepository.save(donation);
+}
+
+
+public List<Donation> getClaimedDonations(Long userId) {
+    return donationRepository.findByClaimedBy_Id(userId);
+}
 }
