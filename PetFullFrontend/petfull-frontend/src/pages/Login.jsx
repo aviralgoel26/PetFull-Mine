@@ -8,20 +8,42 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const response = await fetch("http://localhost:8080/api/auth/login", {
+     try {
+    const response = await fetch("http://localhost:8080/api/users/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
-    const result = await response.text();
-    setMessage(result);
-
-    if (result === "LOGIN_SUCCESS") {
-      alert("Login Successful!");
-      // Navigate to dashboard later
+    if (!response.ok) {
+      const error = await response.text();
+      setMessage(error);
+      return;
     }
-  };
+
+    const user = await response.json();
+    // ✅ store user
+    localStorage.setItem("user", JSON.stringify(user));
+console.log("FULL USER OBJECT:", user);
+
+if (user.role === "DONOR") {
+  console.log("Routing to DONOR");
+  window.location.href = "/donor-dashboard";
+
+} else if (user.role === "RECIPIENT") {
+  console.log("Routing to RECIPIENT");
+  window.location.href = "/recipient-dashboard";
+
+} else {
+  console.log("Role received:", user.role);
+  setMessage("Unknown role");
+}
+
+  } catch (err) {
+    console.error(err);
+    setMessage("Login failed");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 to-yellow-100 px-4">
@@ -73,12 +95,10 @@ const Login = () => {
 
         {/* Message */}
         {message && (
-          <p className="text-center text-sm mt-3 text-red-500">
-            {message === "USER_NOT_FOUND" && "User not found!"}
-            {message === "INVALID_PASSWORD" && "Incorrect password!"}
-            {message === "LOGIN_SUCCESS" && "Login successful!"}
-          </p>
-        )}
+  <p className="text-center text-sm mt-3 text-red-500">
+    {message}
+  </p>
+)}
 
         {/* Footer */}
         <p className="text-center mt-5 text-gray-600 text-sm">

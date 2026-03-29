@@ -45,19 +45,20 @@ public class UserController {
         return "User API is working!";
     }
     @PostMapping("/login")
-    public ResponseEntity<?> loginuser(@RequestBody User loginData)
-    {
-        User existingUser=userRepository.findByEmail(loginData.getEmail());
-        if(existingUser==null)
-        {
-            return ResponseEntity.status(400).body("User does not exist");
-        }
-        if(!existingUser.getPassword().equals(loginData.getPassword()))
-        {
-            return ResponseEntity.status(400).body("Incorrect Password");
-        }
-        return ResponseEntity.ok("Login Successfull");
+public ResponseEntity<?> loginuser(@RequestBody User loginData) {
+
+    User existingUser = userRepository.findByEmail(loginData.getEmail());
+
+    if (existingUser == null) {
+        return ResponseEntity.status(400).body("User does not exist");
     }
+
+    if (!existingUser.getPassword().equals(loginData.getPassword())) {
+        return ResponseEntity.status(400).body("Incorrect Password");
+    }
+
+    return ResponseEntity.ok(existingUser); // ✅ FIXED
+}
     @GetMapping("/all")
     public java.util.List<User> getAllUsers() {
         return userRepository.findAll();
