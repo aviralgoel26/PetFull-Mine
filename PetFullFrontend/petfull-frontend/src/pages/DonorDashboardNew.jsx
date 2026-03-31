@@ -35,93 +35,20 @@ import React, {
 
 import api from "../api/api";
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-
-// ─── Mock Data ──────────────────────────────────────────────────────────────
-const MOCK_DONATIONS = [
-  {
-    id: 1,
-    foodName: "Vegetable Biryani",
-    description: "Fresh home-cooked biryani, enough for a small community.",
-    quantity: 25,
-    unit: "servings",
-    city: "Ludhiana",
-    state: "Punjab",
-    status: "AVAILABLE",
-    foodType: "veg",
-    manufacturedDateTime: new Date(Date.now() - 2 * 3600000).toISOString(),
-    expiryDateTime: new Date(Date.now() + 4 * 3600000).toISOString(),
-    imagePreview: null,
-    claimedBy: null,
-  },
-  {
-    id: 2,
-    foodName: "Paneer Curry + Rice",
-    description: "Wedding surplus. Hygienically packed.",
-    quantity: 60,
-    unit: "servings",
-    city: "Chandigarh",
-    state: "Punjab",
-    status: "CLAIMED",
-    foodType: "veg",
-    manufacturedDateTime: new Date(Date.now() - 5 * 3600000).toISOString(),
-    expiryDateTime: new Date(Date.now() + 2 * 3600000).toISOString(),
-    imagePreview: null,
-    claimedBy: { name: "Feed Punjab NGO", claimedAt: new Date(Date.now() - 1 * 3600000).toISOString(), status: "PICKED" },
-  },
-  {
-    id: 3,
-    foodName: "Assorted Bread Loaves",
-    description: "Bakery surplus. Best before today evening.",
-    quantity: 40,
-    unit: "loaves",
-    city: "Amritsar",
-    state: "Punjab",
-    status: "EXPIRED",
-    foodType: "veg",
-    manufacturedDateTime: new Date(Date.now() - 20 * 3600000).toISOString(),
-    expiryDateTime: new Date(Date.now() - 2 * 3600000).toISOString(),
-    imagePreview: null,
-    claimedBy: null,
-  },
-  {
-    id: 4,
-    foodName: "Chicken Curry",
-    description: "Restaurant end-of-day surplus. Served warm.",
-    quantity: 20,
-    unit: "servings",
-    city: "Ludhiana",
-    state: "Punjab",
-    status: "AVAILABLE",
-    foodType: "nonveg",
-    manufacturedDateTime: new Date(Date.now() - 1 * 3600000).toISOString(),
-    expiryDateTime: new Date(Date.now() + 1.5 * 3600000).toISOString(),
-    imagePreview: null,
-    claimedBy: null,
-  },
-  {
-    id: 5,
-    foodName: "Mixed Fruit Basket",
-    description: "Supermarket surplus — seasonal fruits, all fresh.",
-    quantity: 15,
-    unit: "kg",
-    city: "Ludhiana",
-    state: "Punjab",
-    status: "CLAIMED",
-    foodType: "veg",
-    manufacturedDateTime: new Date(Date.now() - 3 * 3600000).toISOString(),
-    expiryDateTime: new Date(Date.now() + 10 * 3600000).toISOString(),
-    imagePreview: null,
-    claimedBy: { name: "Hope Foundation", claimedAt: new Date(Date.now() - 30 * 60000).toISOString(), status: "PENDING" },
-  },
-];
-
-const MOCK_USER = {
-  name: "Arjun Mehta",
-  org: "Mehta's Kitchen",
-  avatar: "AM",
-  impactScore: 840,
-  badges: ["top_donor", "hundred_meals"],
+const getUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
 };
+const user = getUser();
+
+useEffect(() => {
+  if (!user) {
+    window.location.href = "/login";
+  }
+}, [user]);
 
 const IMPACT_DATA = [12, 18, 9, 25, 30, 22, 40]; // mock weekly meals
 const IMPACT_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -442,7 +369,8 @@ function DonationCard({ donation, onDelete, onMarkComplete, toast }) {
     if (!window.confirm(`Delete "${donation.foodName}"?`)) return;
     setDeleting(true);
     try {
-      await api.delete(`/donations/${donation.id}?userId=1`);
+     const user = JSON.parse(localStorage.getItem("user"));
+await api.delete(`/donations/${donation.id}?userId=${user.id}`);
       onDelete(donation.id);
       toast("Donation deleted.", "info");
     } catch {
@@ -602,7 +530,8 @@ function AddDonationForm({ isVerified, onCreated, toast }) {
       // Object.entries(form).forEach(([k, v]) => v && fd.append(k, v));
       // const res = await api.post("/donations", fd, { headers: { "Content-Type": "multipart/form-data" }});
 
-      const res = await api.post(`/donations?userId=1`, form);
+      const user = getUser();
+     const res= await api.post(`/donations?userId=${user.id}`, form);
       const created = {
         ...res.data,
         foodName: form.foodName,
@@ -904,6 +833,11 @@ function Sidebar({ tab, setTab, user, donorStatus }) {
     </aside>
   );
 }
+//logout handler
+  const handleLogout = () => {
+  localStorage.removeItem("user");
+  window.location.href = "/login";
+};
 
 // ─── Top navbar ───────────────────────────────────────────────────────────────
 
@@ -923,6 +857,19 @@ function TopNav({ tab, darkMode, setDarkMode, user, expiringSoon }) {
           {darkMode ? "☀ Light" : "🌙 Dark"}
         </button>
         <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "var(--orange)", border: "1.5px solid var(--orange-md)" }}>{user.avatar}</div>
+     <button
+  onClick={handleLogout}
+  style={{
+    padding: "8px 12px",
+    background: "#f44336",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer"
+  }}
+>
+  Logout
+</button>
       </div>
     </header>
   );
@@ -1073,11 +1020,19 @@ export default function DonorDashboard() {
 
   // Fetch donor status
   useEffect(() => {
-    api.get("/users/me/status")
+    const user = getUser();
+
+api.get("/users/me/status", {
+  headers: {
+    "User-Id": user.id
+  }
+})
       .then((r) => setDonorStatus(r.data))
       .catch(() => toast("Failed to load donor status.", "error"))
       .finally(() => setStatusLoading(false));
   }, []);
+
+
 
   // Fetch donations
 
@@ -1085,13 +1040,14 @@ export default function DonorDashboard() {
   const fetchDonations = useCallback(async () => {
   try {
     setDonationsLoading(true);
-
-    const r = await api.get("/donations/my");
+    const user = getUser()
+    const r = await api.get(`/donations/my?userId=${user.id}`);
 
     const mapped = r.data.map(d => ({
       ...d,
       foodType: "veg",
       imagePreview: null,
+      status: d.status || "AVAILABLE",
       claimedBy: d.claimedBy
         ? {
             name: d.claimedBy.fullName,

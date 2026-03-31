@@ -45,6 +45,14 @@ public void deleteDonation(Long id) {
     return donationRepository.findByDonor_Id(userId);
 }
 public List<Donation> getAvailableDonations() {
+    List<Donation> donations = donationRepository.findByStatus("AVAILABLE");
+    for(Donation d: donations)
+        {
+            if(d.getExpiryDateTime()!=null && d.getExpiryDateTime().isBefore(java.time.LocalDateTime.now())) {
+                d.setStatus("EXPIRED");
+                donationRepository.save(d);
+            }
+        }
     return donationRepository.findByStatus("AVAILABLE");
 }
 

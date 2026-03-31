@@ -30,110 +30,7 @@ import React, {
 import api from "../api/api";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
-/**const MOCK_DONATIONS = [
-  {
-    id: 1,
-    foodName: "Biryani & Raita",
-    description: "Freshly prepared biryani, enough for 30 people. Vegetarian.",
-    quantity: 30,
-    unit: "servings",
-    city: "Ludhiana",
-    foodType: "veg",
-    latitude: 30.9,
-    longitude: 75.85,
-    expiryDateTime: new Date(Date.now() + 3 * 3600 * 1000).toISOString(),
-    status: "available",
-    donor: "Sharma Family",
-    image: null,
-  },
-  {
-    id: 2,
-    foodName: "Bread Loaves",
-    description: "Packed bread loaves from a local bakery, best before today.",
-    quantity: 50,
-    unit: "loaves",
-    city: "Chandigarh",
-    foodType: "veg",
-    latitude: 30.73,
-    longitude: 76.78,
-    expiryDateTime: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
-    status: "available",
-    donor: "City Bakery",
-    image: null,
-  },
-  {
-    id: 3,
-    foodName: "Dal Makhani",
-    description: "Home-cooked dal makhani with rice. Non-vegetarian ghee used.",
-    quantity: 15,
-    unit: "servings",
-    city: "Ludhiana",
-    foodType: "nonveg",
-    latitude: 30.91,
-    longitude: 75.86,
-    expiryDateTime: new Date(Date.now() + 1.5 * 3600 * 1000).toISOString(),
-    status: "available",
-    donor: "Kaur Household",
-    image: null,
-  },
-  {
-    id: 4,
-    foodName: "Vegetable Pulao",
-    description: "Party leftovers — vegetable pulao with mixed raita.",
-    quantity: 60,
-    unit: "servings",
-    city: "Amritsar",
-    foodType: "veg",
-    latitude: 31.63,
-    longitude: 74.87,
-    expiryDateTime: new Date(Date.now() + 7 * 3600 * 1000).toISOString(),
-    status: "available",
-    donor: "Punjab Events Co.",
-    image: null,
-  },
-  {
-    id: 5,
-    foodName: "Chicken Curry",
-    description: "Restaurant surplus chicken curry. Serves approximately 20.",
-    quantity: 20,
-    unit: "servings",
-    city: "Ludhiana",
-    foodType: "nonveg",
-    latitude: 30.88,
-    longitude: 75.84,
-    expiryDateTime: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
-    status: "claimed",
-    donor: "Taj Dhaba",
-    image: null,
-  },
-  {
-    id: 6,
-    foodName: "Mixed Fruit Box",
-    description: "Assorted seasonal fruits from a supermarket surplus.",
-    quantity: 40,
-    unit: "kg",
-    city: "Ludhiana",
-    foodType: "veg",
-    latitude: 30.89,
-    longitude: 75.83,
-    expiryDateTime: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
-    status: "available",
-    donor: "FreshMart",
-    image: null,
-  },
-];
 
-const MOCK_USER = {
-  id: 2,
-  name: "Priya Ngo",
-  org: "Feed Punjab Foundation",
-  avatar: "PN",
-  location: { latitude: 30.9, longitude: 75.85 },
-  preferences: { dietType: "both", maxDistance: 50 },
-  totalClaimed: 12,
-  activeClaims: 2,
-};
-*/
 // ─── Utility Helpers ──────────────────────────────────────────────────────────
 /** Haversine distance in km between two lat/lng points */
 function getDistanceKm(lat1, lng1, lat2, lng2) {
@@ -594,7 +491,10 @@ function DonationCard({ donation, userLocation, onClaimClick }) {
     expired: { bg: "var(--surface2)", text: "var(--text3)" },
   };
   const uc = urgencyColors[expiry.urgency];
-
+const handleLogout = () => {
+  localStorage.removeItem("user");
+  window.location.href = "/login";
+};
   return (
     <div
       className="donation-card"
@@ -633,6 +533,19 @@ function DonationCard({ donation, userLocation, onClaimClick }) {
             {donation.foodName}
           </h3>
           <p style={{ fontSize: 12, color: "var(--text3)", marginTop: 2 }}>by {donation.donor?.fullName}</p>
+          <button
+  onClick={handleLogout}
+  style={{
+    padding: "8px 12px",
+    background: "#f44336",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer"
+  }}
+>
+  Logout
+</button>
         </div>
         <span
           className="badge"
@@ -1149,16 +1062,21 @@ const RecipientDashboard = () => {
   const [darkMode, setDarkMode] = useState(false);
   const { toasts, addToast } = useToasts();
 
-  const user = {
-  id: 2,
-  name: "Recipient",
-  avatar: "R",
-  org: "NGO",
-  location: { latitude: 0, longitude: 0 },
-  preferences: { dietType: "both", maxDistance: 50 },
-  totalClaimed: 0,
-  activeClaims: 0,
+
+  const getUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
 };
+const user = getUser();
+
+useEffect(() => {
+  if (!user) {
+    window.location.href = "/login";
+  }
+}, [user]);
 
   // Dark mode
   useEffect(() => {
