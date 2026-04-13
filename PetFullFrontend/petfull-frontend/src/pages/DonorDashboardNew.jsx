@@ -42,13 +42,7 @@ const getUser = () => {
     return null;
   }
 };
-const user = getUser();
 
-useEffect(() => {
-  if (!user) {
-    window.location.href = "/login";
-  }
-}, [user]);
 
 const IMPACT_DATA = [12, 18, 9, 25, 30, 22, 40]; // mock weekly meals
 const IMPACT_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -1005,13 +999,13 @@ export default function DonorDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const { toasts, add: toast } = useToasts();
 
-  const user = {
-  name: "Aviral",
-  org: "PetFull Donor",
-  avatar: "A",
-  impactScore: 0,
-  badges: [],
-};
+  const user = getUser();
+
+useEffect(() => {
+  if (!user) {
+    window.location.href = "/login";
+  }
+}, [user]);
 
   // Apply dark mode
   useEffect(() => {
