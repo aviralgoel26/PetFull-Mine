@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import DonorDashboardNew from "./pages/DonorDashboardNew";
 import RecipientDashboardNew from "./pages/RecipientDashboardNew";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/donor-dashboard" element={<DonorDashboardNew />} />
         <Route path="/recipient-dashboard" element={<RecipientDashboardNew />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
       </Routes>
     </Router>
