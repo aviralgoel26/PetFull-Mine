@@ -364,7 +364,11 @@ function DonationCard({ donation, onDelete, onMarkComplete, toast }) {
     setDeleting(true);
     try {
      const user = JSON.parse(localStorage.getItem("user"));
-await api.delete(`/donations/${donation.id}?userId=${user.id}`);
+await api.delete(`/donations/${donation.id}`, {
+  headers: {
+    "User-Id": user.id
+  }
+});
       onDelete(donation.id);
       toast("Donation deleted.", "info");
     } catch {
@@ -525,7 +529,11 @@ function AddDonationForm({ isVerified, onCreated, toast }) {
       // const res = await api.post("/donations", fd, { headers: { "Content-Type": "multipart/form-data" }});
 
       const user = getUser();
-     const res= await api.post(`/donations?userId=${user.id}`, form);
+     const res= await api.post("/donations", form, {
+  headers: {
+    "User-Id": user.id
+  }
+});
       const created = {
         ...res.data,
         foodName: form.foodName,
@@ -555,11 +563,7 @@ function AddDonationForm({ isVerified, onCreated, toast }) {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {!isVerified && (
-        <div style={{ padding: "10px 14px", background: "var(--red-lt)", borderRadius: "var(--r-sm)", fontSize: 12.5, color: "var(--red)", fontWeight: 500 }}>
-          ⚠ You must be a verified donor to add donations.
-        </div>
-      )}
+      {}
 
       <Field label="Food Name" required error={errors.foodName}>
         <input className="f-input" name="foodName" value={form.foodName} onChange={handle} disabled={!isVerified} placeholder="e.g. Vegetable Biryani" />
@@ -827,17 +831,13 @@ function Sidebar({ tab, setTab, user, donorStatus }) {
     </aside>
   );
 }
-//logout handler
-  const handleLogout = () => {
-  localStorage.removeItem("user");
-  window.location.href = "/login";
-};
+
 
 // ─── Top navbar ───────────────────────────────────────────────────────────────
 
 const TAB_TITLES = { overview: "Dashboard Overview", add: "Add Donation", donations: "My Donations", analytics: "Impact Analytics", profile: "Profile" };
 
-function TopNav({ tab, darkMode, setDarkMode, user, expiringSoon }) {
+function TopNav({ tab, darkMode, setDarkMode, user, expiringSoon, onLogout }) {
   return (
     <header style={{ position: "fixed", top: 0, left: "var(--sidebar-w)", right: 0, height: "var(--nav-h)", background: "var(--surface)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 26px", zIndex: 99 }}>
       <h1 style={{ fontSize: 16.5, fontWeight: 600, fontFamily: "var(--font-d)", color: "var(--text)" }}>{TAB_TITLES[tab]}</h1>
@@ -852,7 +852,7 @@ function TopNav({ tab, darkMode, setDarkMode, user, expiringSoon }) {
         </button>
         <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "var(--orange)", border: "1.5px solid var(--orange-md)" }}>{user.avatar}</div>
      <button
-  onClick={handleLogout}
+  onClick={onLogout}
   style={{
     padding: "8px 12px",
     background: "#f44336",
@@ -1006,7 +1006,11 @@ useEffect(() => {
     window.location.href = "/login";
   }
 }, [user]);
-
+//logout handler
+  const handleLogout = () => {
+  localStorage.removeItem("user");
+  window.location.href = "/login";
+};
   // Apply dark mode
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
@@ -1035,7 +1039,11 @@ api.get("/users/me/status", {
   try {
     setDonationsLoading(true);
     const user = getUser()
-    const r = await api.get(`/donations/my?userId=${user.id}`);
+    const r = await api.get("/donations/my", {
+  headers: {
+    "User-Id": user.id
+  }
+});
 
     const mapped = r.data.map(d => ({
       ...d,
@@ -1064,15 +1072,24 @@ useEffect(() => {
 }, [fetchDonations]);
 
   // Verification apply
-  const applyForVerification = useCallback(async () => {
-    try {
-      await api.post("/verification/apply");
-      setDonorStatus("PENDING");
-      toast("Verification request submitted! We'll review shortly.", "success");
-    } catch (err) {
-      toast(err?.response?.data || "Error submitting verification.", "error");
-    }
-  }, [toast]);
+  const handleApplyVerification = async () => {
+  try {
+    const user = getUser();
+
+    await api.post("/verification/apply", null, {
+      headers: {
+        "User-Id": user.id
+      }
+    });
+
+    setDonorStatus("PENDING"); // ✅ THIS is correct
+
+    toast("Verification request submitted!", "success");
+
+  } catch (err) {
+    toast("Failed to apply for verification", "error");
+  }
+};
 
   // Donation CRUD handlers
   const handleDonationCreated = useCallback(async() => {
@@ -1113,7 +1130,14 @@ useEffect(() => {
 
       <Sidebar tab={tab} setTab={setTab} user={user} donorStatus={donorStatus} />
 
-      <TopNav tab={tab} darkMode={darkMode} setDarkMode={setDarkMode} user={user} expiringSoon={expiringSoon} />
+     <TopNav 
+  tab={tab} 
+  darkMode={darkMode} 
+  setDarkMode={setDarkMode} 
+  user={user} 
+  expiringSoon={expiringSoon}
+  onLogout={handleLogout}
+/>
 
       <main className="main" style={{ marginLeft: "var(--sidebar-w)", marginTop: "var(--nav-h)", padding: "28px 26px", minHeight: "calc(100vh - var(--nav-h))" }}>
 
@@ -1124,7 +1148,7 @@ useEffect(() => {
             user={user}
             setTab={setTab}
             donorStatus={donorStatus}
-            onApplyVerification={applyForVerification}
+            onApplyVerification={handleApplyVerification}
           />
         )}
 

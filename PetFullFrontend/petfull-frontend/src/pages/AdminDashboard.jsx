@@ -102,36 +102,6 @@ const GLOBAL_CSS = `
 `;
 
 /* ─── Seed Data ──────────────────────────────────────────────────────────────── */
-const INIT_DONORS = [
-  { id:1, name:"Arjun Mehta",   email:"arjun@gmail.com",  phone:"9876543210", joined:"Jan 12, 2025", status:"PENDING" },
-  { id:2, name:"Priya Sharma",  email:"priya@gmail.com",  phone:"9123456789", joined:"Jan 15, 2025", status:"PENDING" },
-  { id:3, name:"Ravi Kumar",    email:"ravi@gmail.com",   phone:"9988776655", joined:"Jan 18, 2025", status:"PENDING" },
-  { id:4, name:"Sunita Patel",  email:"sunita@gmail.com", phone:"9870001111", joined:"Jan 05, 2025", status:"VERIFIED" },
-  { id:5, name:"Ankit Joshi",   email:"ankit@gmail.com",  phone:"9871112222", joined:"Dec 20, 2024", status:"VERIFIED" },
-  { id:6, name:"Meera Nair",    email:"meera@gmail.com",  phone:"9872223333", joined:"Dec 28, 2024", status:"VERIFIED" },
-  { id:7, name:"Karan Singh",   email:"karan@gmail.com",  phone:"9873334444", joined:"Jan 02, 2025", status:"UNVERIFIED" },
-  { id:8, name:"Deepa Rao",     email:"deepa@gmail.com",  phone:"9874445555", joined:"Jan 08, 2025", status:"REJECTED" },
-];
-
-const INIT_DONATIONS = [
-  { id:1, food:"Dal & Rice (5 portions)", donor:"Sunita Patel", qty:"5 portions", location:"Phagwara, Punjab",  listed:"Apr 10, 2025", expires:"Apr 12, 2025", status:"CLAIMED",   type:"Veg" },
-  { id:2, food:"Bread Loaves (3)",        donor:"Ankit Joshi",  qty:"3 loaves",   location:"Ludhiana, Punjab",  listed:"Apr 11, 2025", expires:"Apr 13, 2025", status:"AVAILABLE", type:"Veg" },
-  { id:3, food:"Vegetable Curry",         donor:"Meera Nair",   qty:"4 portions", location:"Chandausi, UP",     listed:"Apr 09, 2025", expires:"Apr 11, 2025", status:"EXPIRED",   type:"Veg" },
-  { id:4, food:"Paneer Biryani",          donor:"Sunita Patel", qty:"8 portions", location:"Phagwara, Punjab",  listed:"Apr 11, 2025", expires:"Apr 14, 2025", status:"AVAILABLE", type:"Veg" },
-  { id:5, food:"Chicken Curry",           donor:"Ankit Joshi",  qty:"1 bowl",     location:"Amritsar, Punjab",  listed:"Apr 10, 2025", expires:"Apr 13, 2025", status:"CLAIMED",   type:"Non-Veg" },
-  { id:6, food:"Samosas (20 pcs)",        donor:"Meera Nair",   qty:"20 pcs",     location:"Phagwara, Punjab",  listed:"Apr 08, 2025", expires:"Apr 10, 2025", status:"EXPIRED",   type:"Veg" },
-  { id:7, food:"Khichdi",                 donor:"Sunita Patel", qty:"6 portions", location:"Jalandhar, Punjab", listed:"Apr 12, 2025", expires:"Apr 14, 2025", status:"AVAILABLE", type:"Veg" },
-];
-
-const INIT_USERS = [
-  { id:1, name:"Arjun Mehta",  email:"arjun@gmail.com",     role:"DONOR",     joined:"Jan 12, 2025" },
-  { id:2, name:"Priya Sharma", email:"priya@gmail.com",     role:"DONOR",     joined:"Jan 15, 2025" },
-  { id:3, name:"Rahul Dev",    email:"rahul@gmail.com",     role:"RECIPIENT", joined:"Jan 10, 2025" },
-  { id:4, name:"Nisha Gupta",  email:"nisha@gmail.com",     role:"RECIPIENT", joined:"Jan 06, 2025" },
-  { id:5, name:"Sunita Patel", email:"sunita@gmail.com",    role:"DONOR",     joined:"Jan 05, 2025" },
-  { id:6, name:"Vikram Jain",  email:"vikram@gmail.com",    role:"RECIPIENT", joined:"Dec 30, 2024" },
-  { id:7, name:"Super Admin",  email:"admin@foodshare.com", role:"ADMIN",     joined:"Dec 01, 2024" },
-];
 
 const INIT_LOGS = [
   { id:1, color:"#16a34a", text:"Donor Sunita Patel approved by admin",          time:"Apr 13 · 10:32 AM" },
@@ -313,8 +283,8 @@ function DashboardPage({ donors, donations, users, onNavigate }) {
         <StatCard label="Total Donors"     value={donors.length}  icon="🤝" accent="#3b82f6" sub={`${pending} pending approval`}/>
         <StatCard label="Recipients"       value={users.filter(u=>u.role==="RECIPIENT").length} icon="🙋" accent="#8b5cf6" sub="Registered users"/>
         <StatCard label="Total Donations"  value={total}          icon="🍱" accent="#22c55e" sub="All time listings"/>
-        <StatCard label="Claimed"          value={claimed}        icon="✅" accent="#f59e0b" sub={`${Math.round(claimed/total*100)}% claim rate`}/>
-        <StatCard label="Expired"          value={expired}        icon="⏰" accent="#ef4444" sub={`${Math.round(expired/total*100)}% expiry rate`}/>
+        <StatCard label="Claimed"          value={claimed}        icon="✅" accent="#f59e0b" sub={`${Math.round((claimed / (total || 1)) * 100)}% claim rate`}/>
+        <StatCard label="Expired"          value={expired}        icon="⏰" accent="#ef4444" sub={`${Math.round((claimed / (total || 1)) * 100)}% expiry rate`}/>
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"1.6fr 1fr",gap:16,marginBottom:16}}>
@@ -344,7 +314,7 @@ function DashboardPage({ donors, donations, users, onNavigate }) {
   );
 }
 
-function DonorsPage({ donors, setDonors, showToast, setLogs }) {
+function DonorsPage({ donors, setDonors, showToast, setLogs, fetchDonors }) {
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const pending = donors.filter(d=>d.status==="PENDING").length;
@@ -354,18 +324,34 @@ function DonorsPage({ donors, setDonors, showToast, setLogs }) {
     (!search||d.name.toLowerCase().includes(search.toLowerCase())||d.email.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const approve = id => {
-    const d = donors.find(x=>x.id===id);
-    setDonors(p=>p.map(x=>x.id===id?{...x,status:"VERIFIED"}:x));
-    setLogs(p=>[{id:Date.now(),color:"#16a34a",text:`Donor ${d.name} approved by admin`,time:"Just now"},...p]);
-    showToast(`${d.name} approved ✓`, "#16a34a");
-  };
-  const reject = id => {
-    const d = donors.find(x=>x.id===id);
-    setDonors(p=>p.map(x=>x.id===id?{...x,status:"REJECTED"}:x));
-    setLogs(p=>[{id:Date.now(),color:"#dc2626",text:`Donor ${d.name} rejected by admin`,time:"Just now"},...p]);
-    showToast(`${d.name} rejected`, "#dc2626");
-  };
+  const approve = async (id) => {
+  try {
+    await fetch(`http://localhost:8080/api/admin/donor/${id}/verify`, {
+      method: "PUT"
+    });
+
+    fetchDonors(); // 🔥 refresh
+
+    showToast("Donor approved ✓", "#16a34a");
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+  const reject = async (id) => {
+  try {
+    await fetch(`http://localhost:8080/api/admin/donor/${id}/reject`, {
+      method: "PUT"
+    });
+
+    fetchDonors(); // 🔥 refresh
+
+    showToast("Donor rejected", "#dc2626");
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const FBTNS = [
     {v:"ALL",      l:"All"},
@@ -413,7 +399,7 @@ function DonorsPage({ donors, setDonors, showToast, setLogs }) {
   );
 }
 
-function DonationsPage({ donations, setDonations, showToast, setLogs }) {
+function DonationsPage({ donations, setDonations, showToast, setLogs, fetchDonations}) {
   const [filter, setFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -424,13 +410,20 @@ function DonationsPage({ donations, setDonations, showToast, setLogs }) {
     (!search||d.food.toLowerCase().includes(search.toLowerCase())||d.donor.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const del = id => {
-    const d = donations.find(x=>x.id===id);
-    if(!window.confirm(`Delete "${d.food}"?`)) return;
-    setDonations(p=>p.filter(x=>x.id!==id));
-    setLogs(p=>[{id:Date.now(),color:"#dc2626",text:`Donation ${d.food} deleted by admin`,time:"Just now"},...p]);
-    showToast("Donation deleted","#dc2626");
-  };
+  const del = async (id) => {
+  try {
+    await fetch(`http://localhost:8080/api/admin/donations/${id}`, {
+      method: "DELETE"
+    });
+
+    fetchDonations(); // 🔥 refresh
+
+    showToast("Donation deleted", "#dc2626");
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const Chip = ({icon,text,danger}) => (
     <span style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:12,
@@ -499,7 +492,7 @@ function DonationsPage({ donations, setDonations, showToast, setLogs }) {
   );
 }
 
-function UsersPage({ users, setUsers, showToast, setLogs }) {
+function UsersPage({ users, setUsers, showToast, setLogs,fetchUsers }) {
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
@@ -508,12 +501,29 @@ function UsersPage({ users, setUsers, showToast, setLogs }) {
     (!search||u.name.toLowerCase().includes(search.toLowerCase())||u.email.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const del = (id, name) => {
-    if(!window.confirm(`Delete user "${name}"?`)) return;
-    setUsers(p=>p.filter(u=>u.id!==id));
-    setLogs(p=>[{id:Date.now(),color:"#dc2626",text:`User ${name} deleted by admin`,time:"Just now"},...p]);
-    showToast(`${name} deleted`,"#dc2626");
-  };
+  const del = async (id, name) => {
+  if (!window.confirm(`Delete user "${name}"?`)) return;
+
+  try {
+    await fetch(`http://localhost:8080/api/admin/users/${id}`, {
+      method: "DELETE"
+    });
+
+    fetchUsers(); // 🔥 refresh from DB
+
+    setLogs(p => [{
+      id: Date.now(),
+      color: "#dc2626",
+      text: `User ${name} deleted by admin`,
+      time: "Just now"
+    }, ...p]);
+
+    showToast(`${name} deleted`, "#dc2626");
+
+  } catch (err) {
+    console.error("Delete user error:", err);
+  }
+};
 
   return (
     <div className="page-enter">
@@ -590,8 +600,8 @@ const NAV_ITEMS = [
 export default function App() {
   const [page, setPage] = useState("dashboard");
   const [donors, setDonors] = useState([]);
-  const [donations, setDonations] = useState(INIT_DONATIONS);
-  const [users, setUsers] = useState(INIT_USERS);
+  const [donations, setDonations] = useState([]);
+  const [users, setUsers] = useState([]);
   const [logs, setLogs] = useState(INIT_LOGS);
   const [toast, setToast] = useState({visible:false,msg:"",color:"#16a34a"});
 
@@ -599,19 +609,63 @@ export default function App() {
     setToast({visible:true,msg,color});
     setTimeout(()=>setToast(t=>({...t,visible:false})),2800);
   };
-const fetchDonors = async () => {
+  const fetchUsers = async () => {
   try {
-    const res = await fetch("http://localhost:8080/api/admin/donors");
+    const res = await fetch("http://localhost:8080/api/admin/users");
     const data = await res.json();
 
     const mapped = data.map(u => ({
-      id: u.id,
-      name: u.fullName,
-      email: u.email,
-      phone: u.phone,
-      joined: "—", // optional
-      status: u.donorStatus,
+  id: u.id,
+  name: u.fullName,
+  email: u.email,
+  role: u.role,
+  joined: "—"
+}));
+
+    setUsers(mapped);
+
+  } catch (err) {
+    console.error("Error fetching users:", err);
+  }
+};
+  const fetchDonations = async () => {
+  try {
+    const res = await fetch("http://localhost:8080/api/admin/donations");
+    const data = await res.json();
+
+    const mapped = data.map(d => ({
+      id: d.id,
+      food: d.foodName,
+      donor: d.donor?.fullName || "Unknown",
+      qty: `${d.quantity} ${d.unit}`,
+      location: `${d.city}, ${d.state}`,
+      listed: d.manufacturedDateTime,
+      expires: d.expiryDateTime,
+      status: d.status,
+      type: d.foodType || "Veg"
     }));
+
+    setDonations(mapped);
+
+  } catch (err) {
+    console.error("Error fetching donations:", err);
+  }
+};
+const fetchDonors = async () => {
+  try {
+    const res = await fetch("http://localhost:8080/api/admin/users");
+    const data = await res.json();
+
+    const mapped = data
+      .filter(u => u.role === "DONOR")   // ✅ ONLY DONORS
+      .map(u => ({
+        id: u.id,
+        name: u.fullName,
+        email: u.email,
+        phone: u.phone,
+        joined: "—",
+        status: u.donorStatus?.toUpperCase() // ✅ IMPORTANT
+      }));
 
     setDonors(mapped);
 
@@ -620,9 +674,11 @@ const fetchDonors = async () => {
   }
 };
   const pendingCount = donors.filter(d=>d.status==="PENDING").length;
-
+  const pendingDonors = donors.filter(d => d.status === "PENDING");
   useEffect(() => {
   fetchDonors();
+  fetchDonations();
+  fetchUsers();
 }, []);
   return (
     <>
@@ -691,18 +747,24 @@ const fetchDonors = async () => {
               <button style={{padding:"6px 16px",borderRadius:8,border:"1.5px solid #e2e8f0",background:"#fff",color:"#374151",fontSize:13,fontWeight:600}}>
                 🌙 Dark
               </button>
-              <button style={{padding:"6px 18px",borderRadius:8,background:"#ef4444",color:"#fff",fontSize:13,fontWeight:700}}>
-                Logout
-              </button>
+             <button 
+  style={{padding:"6px 18px",borderRadius:8,background:"#ef4444",color:"#fff",fontSize:13,fontWeight:700}}
+  onClick={() => {
+    localStorage.clear();
+    window.location.href = "/login";
+  }}
+>
+  Logout
+</button>
             </div>
           </div>
 
           {/* Content */}
           <div style={{padding:"28px 32px",maxWidth:1080}}>
             {page==="dashboard"  &&<DashboardPage donors={donors} donations={donations} users={users} onNavigate={setPage}/>}
-            {page==="donors"     &&<DonorsPage    donors={donors} setDonors={setDonors} showToast={showToast} setLogs={setLogs}/>}
-            {page==="donations"  &&<DonationsPage donations={donations} setDonations={setDonations} showToast={showToast} setLogs={setLogs}/>}
-            {page==="users"      &&<UsersPage     users={users} setUsers={setUsers} showToast={showToast} setLogs={setLogs}/>}
+            {page==="donors"     &&<DonorsPage    donors={donors} setDonors={setDonors} showToast={showToast} setLogs={setLogs} fetchDonors={fetchDonors}/>}
+            {page==="donations"  &&<DonationsPage donations={donations} setDonations={setDonations} showToast={showToast} setLogs={setLogs} fetchDonations={fetchDonations}/>}
+            {page==="users"      &&<UsersPage     users={users} setUsers={setUsers} showToast={showToast} setLogs={setLogs} fetchUsers={fetchUsers}/>}
             {page==="logs"       &&<LogsPage      logs={logs}/>}
           </div>
         </main>
