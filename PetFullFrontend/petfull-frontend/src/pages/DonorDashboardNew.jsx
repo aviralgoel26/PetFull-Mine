@@ -1,28 +1,16 @@
 /**
- * PetFull — Donor Dashboard
- * ─────────────────────────────────────────────────────────────────────────────
- * A premium SaaS-grade donor management dashboard for the PetFull food
- * donation platform. Donors can add, manage, track, and analyze their
- * food donations from a single view.
+ * PetFull — Donor Dashboard (Clean)
  *
- * Features:
- *  ✓ Sidebar + top navbar layout
- *  ✓ Verification status system (Unverified / Pending / Verified)
- *  ✓ Add Donation form with image preview + validation
- *  ✓ Donation management (list, search, filter, sort, delete)
- *  ✓ Status badges (Available / Claimed / Expired / Expiring Soon)
- *  ✓ Dashboard stats overview
- *  ✓ Claim tracking panel
- *  ✓ Impact analytics with mini chart
- *  ✓ Gamification badges + impact score
- *  ✓ Toast notifications
- *  ✓ Loading skeletons
- *  ✓ Dark mode toggle
- *  ✓ Fully responsive
- *
- * Integration: Replace `mockApi` with `import api from "../api/api"` and
- * swap MOCK_* constants for real data. FormData submission is ready for
- * multipart (image/video upload) — see handleSubmitDonation().
+ * Fixes applied:
+ *  1. handleLogout moved to module level, uses localStorage.clear()
+ *  2. Removed unused `delay` helper
+ *  3. foodType now read from backend instead of hardcoded "veg"
+ *  4. user.avatar derived from fullName (was undefined — localStorage has no avatar field)
+ *  5. user.name derived from fullName consistently
+ *  6. Removed floating handleLogout inside root component
+ *  7. AnalyticsPanel guarded against missing user.impactScore / user.badges
+ *  8. ProfileTab uses real fields from localStorage user object
+ *  9. Verification apply passes correct header
  */
 
 import React, {
@@ -32,22 +20,31 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-
 import api from "../api/api";
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-const getUser = () => {
+
+// ─── Auth helpers ─────────────────────────────────────────────────────────────
+
+function getUser() {
   try {
     return JSON.parse(localStorage.getItem("user"));
   } catch {
     return null;
   }
-};
+}
 
+// ✅ Module-level logout — not inside any component
+function handleLogout() {
+  localStorage.clear();
+  window.location.href = "/login";
+}
 
-const IMPACT_DATA = [12, 18, 9, 25, 30, 22, 40]; // mock weekly meals
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const IMPACT_DATA   = [12, 18, 9, 25, 30, 22, 40];
 const IMPACT_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-// ─── Global CSS ──────────────────────────────────────────────────────────────
+// ─── Global CSS ───────────────────────────────────────────────────────────────
+
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap');
 
@@ -105,12 +102,10 @@ const GLOBAL_CSS = `
 
   html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
-  /* Shimmer skeleton */
   @keyframes shimmer {
     0%   { background-position: -700px 0; }
     100% { background-position:  700px 0; }
@@ -122,15 +117,12 @@ const GLOBAL_CSS = `
     border-radius: var(--r-sm);
   }
 
-  /* Toast */
   @keyframes toastIn  { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(30px); } }
 
-  /* Card hover */
   .d-card { transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease); }
   .d-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
-  /* Nav item */
   .nav-item {
     display: flex; align-items: center; gap: 10px;
     padding: 9px 13px; border-radius: var(--r-sm);
@@ -141,7 +133,6 @@ const GLOBAL_CSS = `
   .nav-item:hover  { background: var(--surface2); color: var(--text); }
   .nav-item.active { background: var(--orange-lt); color: var(--orange); }
 
-  /* Buttons */
   .btn { border: none; border-radius: var(--r-sm); font-family: var(--font); font-weight: 600; cursor: pointer; transition: all var(--t); }
   .btn-orange { background: var(--orange); color: #fff; padding: 10px 18px; font-size: 14px; }
   .btn-orange:hover:not(:disabled) { background: #c2410c; }
@@ -150,10 +141,9 @@ const GLOBAL_CSS = `
   .btn-ghost:hover { background: var(--surface2); }
   .btn-danger { background: var(--red-lt); color: var(--red); padding: 7px 13px; font-size: 12px; border: 1px solid #fecaca; }
   .btn-danger:hover { background: #fee2e2; }
-  .btn-sm-icon { background: var(--surface2); border: 1px solid var(--border); color: var(--text3); padding: 7px 10px; font-size: 13px; border-radius: var(--r-sm); cursor: pointer; transition: background var(--t); }
-  .btn-sm-icon:hover { background: var(--surface3); }
+  .btn-logout { background: #fee2e2; color: var(--red); border: 1px solid #fecaca; padding: 7px 14px; font-size: 13px; border-radius: var(--r-sm); font-weight: 600; cursor: pointer; transition: background var(--t); }
+  .btn-logout:hover { background: #fecaca; }
 
-  /* Inputs */
   .f-input {
     width: 100%; padding: 9px 12px;
     background: var(--surface2); border: 1px solid var(--border);
@@ -164,21 +154,17 @@ const GLOBAL_CSS = `
   .f-input::placeholder { color: var(--text3); }
   .f-input:disabled { opacity: .45; cursor: not-allowed; }
 
-  /* Badge */
   .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 600; letter-spacing: .2px; }
 
-  /* Modal */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 150ms; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .modal { background: var(--surface); border-radius: var(--r); padding: 28px; width: 90%; max-width: 480px; box-shadow: var(--shadow-md); animation: slideUp 200ms var(--ease); }
   @keyframes slideUp { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-  /* Bar chart bars */
   .bar-wrap { display: flex; align-items: flex-end; gap: 5px; height: 80px; }
   .bar { flex: 1; border-radius: 4px 4px 0 0; background: var(--orange); opacity: .85; transition: opacity var(--t); }
   .bar:hover { opacity: 1; }
 
-  /* Responsive */
   @media (max-width: 900px) {
     .sidebar { display: none !important; }
     .main { margin-left: 0 !important; }
@@ -187,7 +173,7 @@ const GLOBAL_CSS = `
   }
 `;
 
-// ─── Utility helpers ─────────────────────────────────────────────────────────
+// ─── Utilities ────────────────────────────────────────────────────────────────
 
 function hoursUntil(iso) {
   return (new Date(iso) - Date.now()) / 3600000;
@@ -203,15 +189,25 @@ function formatRelative(iso) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+// ✅ Derive avatar initials from fullName since localStorage has no avatar field
+function avatarFromName(name) {
+  if (!name) return "?";
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+}
+
 function useDebounce(val, delay = 280) {
   const [d, setD] = useState(val);
-  useEffect(() => { const t = setTimeout(() => setD(val), delay); return () => clearTimeout(t); }, [val, delay]);
+  useEffect(() => {
+    const t = setTimeout(() => setD(val), delay);
+    return () => clearTimeout(t);
+  }, [val, delay]);
   return d;
 }
 
 // ─── Toast system ─────────────────────────────────────────────────────────────
 
 let _toastId = 0;
+
 function useToasts() {
   const [toasts, setToasts] = useState([]);
   const add = useCallback((msg, type = "info", ms = 4000) => {
@@ -238,14 +234,7 @@ function ToastStack({ toasts }) {
       {toasts.map((t) => {
         const m = TOAST_META[t.type] || TOAST_META.info;
         return (
-          <div key={t.id} style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: "11px 16px", background: "var(--surface)",
-            borderLeft: `4px solid ${m.color}`, borderRadius: 10,
-            boxShadow: "var(--shadow-md)", minWidth: 250, maxWidth: 340,
-            animation: t.out ? "toastOut .35s forwards" : "toastIn .28s var(--ease)",
-            pointerEvents: "all",
-          }}>
+          <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", background: "var(--surface)", borderLeft: `4px solid ${m.color}`, borderRadius: 10, boxShadow: "var(--shadow-md)", minWidth: 250, maxWidth: 340, animation: t.out ? "toastOut .35s forwards" : "toastIn .28s var(--ease)", pointerEvents: "all" }}>
             <span style={{ width: 20, height: 20, borderRadius: "50%", background: m.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{m.icon}</span>
             <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{t.msg}</span>
           </div>
@@ -255,7 +244,7 @@ function ToastStack({ toasts }) {
   );
 }
 
-// ─── Skeleton card ────────────────────────────────────────────────────────────
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonCard() {
   return (
@@ -267,7 +256,7 @@ function SkeletonCard() {
   );
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// ─── Badges ───────────────────────────────────────────────────────────────────
 
 function StatusBadge({ status, expiry }) {
   const hrs = hoursUntil(expiry);
@@ -276,26 +265,24 @@ function StatusBadge({ status, expiry }) {
   }
   const map = {
     AVAILABLE: { bg: "var(--green-lt)", color: "var(--green)", label: "● Available" },
-    CLAIMED:   { bg: "var(--blue-lt)",  color: "var(--blue)",  label: "✓ Claimed" },
-    EXPIRED:   { bg: "var(--surface2)", color: "var(--text3)", label: "○ Expired" },
+    CLAIMED:   { bg: "var(--blue-lt)",  color: "var(--blue)",  label: "✓ Claimed"   },
+    EXPIRED:   { bg: "var(--surface2)", color: "var(--text3)", label: "○ Expired"   },
   };
   const s = map[status] || map.EXPIRED;
   return <span className="badge" style={{ background: s.bg, color: s.color }}>{s.label}</span>;
 }
 
-// ─── Donor verification badge ─────────────────────────────────────────────────
-
 function VerifBadge({ status }) {
   const map = {
-    UNVERIFIED: { bg: "#fee2e2", color: "#b91c1c", label: "Unverified" },
-    PENDING:    { bg: "#fef3c7", color: "#92400e", label: "⏳ Pending" },
-    VERIFIED:   { bg: "var(--green-lt)", color: "var(--green)", label: "✓ Verified" },
+    UNVERIFIED: { bg: "#fee2e2",         color: "#b91c1c",       label: "Unverified"  },
+    PENDING:    { bg: "#fef3c7",         color: "#92400e",       label: "⏳ Pending"   },
+    VERIFIED:   { bg: "var(--green-lt)", color: "var(--green)",  label: "✓ Verified"  },
   };
   const s = map[status] || map.UNVERIFIED;
   return <span className="badge" style={{ background: s.bg, color: s.color, fontSize: 12 }}>{s.label}</span>;
 }
 
-// ─── Impact bar chart ─────────────────────────────────────────────────────────
+// ─── Charts ───────────────────────────────────────────────────────────────────
 
 function MiniBarChart({ data, labels }) {
   const max = Math.max(...data);
@@ -315,13 +302,13 @@ function MiniBarChart({ data, labels }) {
   );
 }
 
-// ─── Gamification badges ──────────────────────────────────────────────────────
+// ─── Gamification ─────────────────────────────────────────────────────────────
 
 const BADGE_META = {
-  top_donor:     { icon: "🏆", label: "Top Donor",       desc: "In top 10% of donors" },
-  hundred_meals: { icon: "🍽️", label: "100 Meals Club",  desc: "Donated 100+ meals" },
-  early_bird:    { icon: "🌅", label: "Early Bird",       desc: "Donated before 8 AM" },
-  zero_waste:    { icon: "♻️", label: "Zero Waste Hero",  desc: "No expired donations" },
+  top_donor:     { icon: "🏆", label: "Top Donor",      desc: "In top 10% of donors"   },
+  hundred_meals: { icon: "🍽️", label: "100 Meals Club", desc: "Donated 100+ meals"      },
+  early_bird:    { icon: "🌅", label: "Early Bird",      desc: "Donated before 8 AM"    },
+  zero_waste:    { icon: "♻️", label: "Zero Waste Hero", desc: "No expired donations"   },
 };
 
 function GamificationBadge({ id }) {
@@ -352,10 +339,10 @@ function StatCard({ icon, label, value, color = "var(--orange)", bgColor = "var(
   );
 }
 
-// ─── Donation card (list item) ────────────────────────────────────────────────
+// ─── Donation card ────────────────────────────────────────────────────────────
 
 function DonationCard({ donation, onDelete, onMarkComplete, toast }) {
-  const [deleting, setDeleting] = useState(false);
+  const [deleting,   setDeleting]   = useState(false);
   const [completing, setCompleting] = useState(false);
   const hrs = hoursUntil(donation.expiryDateTime);
 
@@ -363,12 +350,8 @@ function DonationCard({ donation, onDelete, onMarkComplete, toast }) {
     if (!window.confirm(`Delete "${donation.foodName}"?`)) return;
     setDeleting(true);
     try {
-     const user = JSON.parse(localStorage.getItem("user"));
-await api.delete(`/donations/${donation.id}`, {
-  headers: {
-    "User-Id": user.id
-  }
-});
+      const user = getUser();
+      await api.delete(`/donations/${donation.id}`, { headers: { "User-Id": user.id } });
       onDelete(donation.id);
       toast("Donation deleted.", "info");
     } catch {
@@ -381,7 +364,8 @@ await api.delete(`/donations/${donation.id}`, {
   const handleComplete = async () => {
     setCompleting(true);
     try {
-      await api.put(`/donations/${donation.id}/complete`);
+      const user = getUser();
+      await api.put(`/donations/${donation.id}/complete`, null, { headers: { "User-Id": user.id } });
       onMarkComplete(donation.id);
       toast("Marked as completed! ✓", "success");
     } catch {
@@ -392,19 +376,12 @@ await api.delete(`/donations/${donation.id}`, {
   };
 
   return (
-    <div className="d-card" style={{
-      background: "var(--surface)",
-      border: `1px solid ${hrs > 0 && hrs <= 2 && donation.status === "AVAILABLE" ? "#fed7aa" : "var(--border)"}`,
-      borderRadius: "var(--r)", padding: "16px 18px", boxShadow: "var(--shadow)",
-      position: "relative", overflow: "hidden",
-    }}>
-      {/* Urgency accent */}
+    <div className="d-card" style={{ background: "var(--surface)", border: `1px solid ${hrs > 0 && hrs <= 2 && donation.status === "AVAILABLE" ? "#fed7aa" : "var(--border)"}`, borderRadius: "var(--r)", padding: "16px 18px", boxShadow: "var(--shadow)", position: "relative", overflow: "hidden" }}>
       {hrs > 0 && hrs <= 2 && donation.status === "AVAILABLE" && (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, #ea580c, #f97316)" }} />
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-        {/* Left info */}
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
             <h3 style={{ fontSize: 14.5, fontWeight: 600, fontFamily: "var(--font-d)", color: "var(--text)" }}>{donation.foodName}</h3>
@@ -416,12 +393,11 @@ await api.delete(`/donations/${donation.id}`, {
           <p style={{ fontSize: 12.5, color: "var(--text2)", lineHeight: 1.5, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {donation.description}
           </p>
-          {/* Chips */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {[
               ["📦", `${donation.quantity} ${donation.unit}`],
-              ["📍", `${donation.city}, ${donation.state}`],
-              ["⏱", hrs > 0 ? `${Math.floor(hrs)}h left` : "Expired"],
+              ["📍", `${donation.city}${donation.state ? ", " + donation.state : ""}`],
+              ["⏱",  hrs > 0 ? `${Math.floor(hrs)}h left` : "Expired"],
             ].map(([ic, lb]) => (
               <span key={lb} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 99, fontSize: 11.5, color: "var(--text2)", fontWeight: 500 }}>
                 <span style={{ fontSize: 10 }}>{ic}</span> {lb}
@@ -429,7 +405,6 @@ await api.delete(`/donations/${donation.id}`, {
             ))}
           </div>
 
-          {/* Claim info */}
           {donation.claimedBy && (
             <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--blue-lt)", borderRadius: "var(--r-sm)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
               <div>
@@ -448,7 +423,6 @@ await api.delete(`/donations/${donation.id}`, {
           )}
         </div>
 
-        {/* Actions */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
           <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
             {deleting ? "…" : "🗑 Delete"}
@@ -459,13 +433,6 @@ await api.delete(`/donations/${donation.id}`, {
   );
 }
 
-// ─── Add Donation Form ────────────────────────────────────────────────────────
-
-const EMPTY_FORM = {
-  foodName: "", description: "", quantity: "", unit: "kg",
-  foodType: "veg", manufacturedDateTime: "", expiryDateTime: "",
-  city: "", state: "", image: null, video: null,
-};
 // ─── Field wrapper ────────────────────────────────────────────────────────────
 
 function Field({ label, required, error, children }) {
@@ -482,11 +449,19 @@ function Field({ label, required, error, children }) {
   );
 }
 
+// ─── Add Donation Form ────────────────────────────────────────────────────────
+
+const EMPTY_FORM = {
+  foodName: "", description: "", quantity: "", unit: "kg",
+  foodType: "veg", manufacturedDateTime: "", expiryDateTime: "",
+  city: "", state: "", image: null, video: null,
+};
+
 function AddDonationForm({ isVerified, onCreated, toast }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form,       setForm]       = useState(EMPTY_FORM);
   const [imgPreview, setImgPreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors,     setErrors]     = useState({});
   const formRef = useRef(null);
 
   const handle = (e) => {
@@ -508,11 +483,11 @@ function AddDonationForm({ isVerified, onCreated, toast }) {
 
   const validate = () => {
     const errs = {};
-    if (!form.foodName.trim())          errs.foodName = "Required";
-    if (!form.quantity || isNaN(+form.quantity) || +form.quantity <= 0) errs.quantity = "Enter a valid quantity";
-    if (!form.city.trim())              errs.city = "Required";
-    if (!form.expiryDateTime)           errs.expiryDateTime = "Required";
-    if (form.expiryDateTime && new Date(form.expiryDateTime) <= new Date()) errs.expiryDateTime = "Must be in the future";
+    if (!form.foodName.trim())                                                    errs.foodName      = "Required";
+    if (!form.quantity || isNaN(+form.quantity) || +form.quantity <= 0)           errs.quantity      = "Enter a valid quantity";
+    if (!form.city.trim())                                                        errs.city          = "Required";
+    if (!form.expiryDateTime)                                                     errs.expiryDateTime = "Required";
+    if (form.expiryDateTime && new Date(form.expiryDateTime) <= new Date())       errs.expiryDateTime = "Must be in the future";
     return errs;
   };
 
@@ -523,32 +498,10 @@ function AddDonationForm({ isVerified, onCreated, toast }) {
 
     setSubmitting(true);
     try {
-      // Real backend: use FormData for multipart
-      // const fd = new FormData();
-      // Object.entries(form).forEach(([k, v]) => v && fd.append(k, v));
-      // const res = await api.post("/donations", fd, { headers: { "Content-Type": "multipart/form-data" }});
-
       const user = getUser();
-     const res= await api.post("/donations", form, {
-  headers: {
-    "User-Id": user.id
-  }
-});
-      const created = {
-        ...res.data,
-        foodName: form.foodName,
-        description: form.description,
-        quantity: +form.quantity,
-        unit: form.unit,
-        foodType: form.foodType,
-        city: form.city,
-        state: form.state,
-        manufacturedDateTime: form.manufacturedDateTime,
-        expiryDateTime: form.expiryDateTime,
-        imagePreview: imgPreview,
-        status: "AVAILABLE",
-      };
-      onCreated(created);
+      const res  = await api.post("/donations", form, { headers: { "User-Id": user.id } });
+
+      onCreated(res.data);
       toast(`"${form.foodName}" donation created! 🎉`, "success");
       setForm(EMPTY_FORM);
       setImgPreview(null);
@@ -560,17 +513,20 @@ function AddDonationForm({ isVerified, onCreated, toast }) {
     }
   };
 
-
   return (
     <form ref={formRef} onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {}
+      {!isVerified && (
+        <div style={{ padding: "10px 14px", background: "var(--red-lt)", borderRadius: "var(--r-sm)", fontSize: 12.5, color: "var(--red)", fontWeight: 500 }}>
+          ⚠ You must be a verified donor to add donations.
+        </div>
+      )}
 
       <Field label="Food Name" required error={errors.foodName}>
         <input className="f-input" name="foodName" value={form.foodName} onChange={handle} disabled={!isVerified} placeholder="e.g. Vegetable Biryani" />
       </Field>
 
       <Field label="Description">
-        <textarea className="f-input" name="description" value={form.description} onChange={handle} disabled={!isVerified} placeholder="Briefly describe the food, quantity context, allergens…" rows={3} style={{ resize: "vertical" }} />
+        <textarea className="f-input" name="description" value={form.description} onChange={handle} disabled={!isVerified} placeholder="Briefly describe the food, allergens…" rows={3} style={{ resize: "vertical" }} />
       </Field>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
@@ -613,7 +569,6 @@ function AddDonationForm({ isVerified, onCreated, toast }) {
         </Field>
       </div>
 
-      {/* Image upload with preview */}
       <Field label="Cover Photo">
         <div style={{ border: `2px dashed ${imgPreview ? "var(--orange)" : "var(--border)"}`, borderRadius: "var(--r-sm)", padding: 14, textAlign: "center", background: "var(--surface2)", transition: "border-color var(--t)" }}>
           {imgPreview ? (
@@ -645,23 +600,23 @@ function AddDonationForm({ isVerified, onCreated, toast }) {
 // ─── My Donations panel ───────────────────────────────────────────────────────
 
 function MyDonationsPanel({ donations, loading, onDelete, onMarkComplete, toast }) {
-  const [search, setSearch] = useState("");
+  const [search,       setSearch]       = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
-  const [filterType, setFilterType] = useState("ALL");
-  const [sortBy, setSortBy] = useState("latest");
+  const [filterType,   setFilterType]   = useState("ALL");
+  const [sortBy,       setSortBy]       = useState("latest");
   const dSearch = useDebounce(search);
 
   const filtered = useMemo(() => {
     let list = [...donations];
     if (dSearch) {
       const q = dSearch.toLowerCase();
-      list = list.filter((d) => d.foodName.toLowerCase().includes(q) || d.city.toLowerCase().includes(q));
+      list = list.filter((d) => d.foodName?.toLowerCase().includes(q) || d.city?.toLowerCase().includes(q));
     }
-    if (filterStatus !== "ALL") list = list.filter((d) => d.status === filterStatus);
-    if (filterType !== "ALL") list = list.filter((d) => d.foodType === filterType);
+    if (filterStatus !== "ALL") list = list.filter((d) => d.status    === filterStatus);
+    if (filterType   !== "ALL") list = list.filter((d) => d.foodType  === filterType);
 
-    if (sortBy === "latest") list.sort((a, b) => new Date(b.manufacturedDateTime) - new Date(a.manufacturedDateTime));
-    else if (sortBy === "expiry") list.sort((a, b) => new Date(a.expiryDateTime) - new Date(b.expiryDateTime));
+    if      (sortBy === "latest")   list.sort((a, b) => new Date(b.manufacturedDateTime) - new Date(a.manufacturedDateTime));
+    else if (sortBy === "expiry")   list.sort((a, b) => new Date(a.expiryDateTime)       - new Date(b.expiryDateTime));
     else if (sortBy === "quantity") list.sort((a, b) => b.quantity - a.quantity);
 
     return list;
@@ -675,7 +630,6 @@ function MyDonationsPanel({ donations, loading, onDelete, onMarkComplete, toast 
 
   return (
     <div>
-      {/* Filter bar */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
         <input className="f-input" style={{ maxWidth: 220, flex: 1 }} placeholder="🔍 Search donations…" value={search} onChange={(e) => setSearch(e.target.value)} />
         <select className="f-input" style={{ width: 140 }} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -700,15 +654,16 @@ function MyDonationsPanel({ donations, loading, onDelete, onMarkComplete, toast 
         {filtered.length} donation{filtered.length !== 1 ? "s" : ""} found
       </p>
 
-      {filtered.length === 0 ? (
-        <EmptyState icon="🍱" title="No donations yet" subtitle="Your donations will appear here once you add them." />
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {filtered.map((d) => (
-            <DonationCard key={d.id} donation={d} onDelete={onDelete} onMarkComplete={onMarkComplete} toast={toast} />
-          ))}
-        </div>
-      )}
+      {filtered.length === 0
+        ? <EmptyState icon="🍱" title="No donations yet" subtitle="Your donations will appear here once you add them." />
+        : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {filtered.map((d) => (
+              <DonationCard key={d.id} donation={d} onDelete={onDelete} onMarkComplete={onMarkComplete} toast={toast} />
+            ))}
+          </div>
+        )
+      }
     </div>
   );
 }
@@ -716,33 +671,35 @@ function MyDonationsPanel({ donations, loading, onDelete, onMarkComplete, toast 
 // ─── Analytics panel ──────────────────────────────────────────────────────────
 
 function AnalyticsPanel({ donations, user }) {
-  const totalMeals = donations.reduce((s, d) => s + (d.unit === "servings" ? d.quantity : 0), 0);
+  const totalMeals   = donations.reduce((s, d) => s + (d.unit === "servings" ? d.quantity : 0), 0);
   const wasteReduced = donations.filter((d) => d.status === "CLAIMED").reduce((s, d) => s + d.quantity, 0);
+
+  // ✅ Guard against missing fields — impactScore and badges don't exist in localStorage user
+  const impactScore = user.impactScore || donations.length * 10;
+  const badges      = user.badges      || [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      {/* Impact score */}
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: 20, boxShadow: "var(--shadow)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div>
             <p style={{ fontSize: 11, color: "var(--text3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: .6 }}>Impact Score</p>
-            <p style={{ fontSize: 36, fontWeight: 700, fontFamily: "var(--font-d)", color: "var(--orange)", lineHeight: 1.1 }}>{user.impactScore}</p>
+            <p style={{ fontSize: 36, fontWeight: 700, fontFamily: "var(--font-d)", color: "var(--orange)", lineHeight: 1.1 }}>{impactScore}</p>
           </div>
           <div style={{ width: 60, height: 60, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>⚡</div>
         </div>
         <div style={{ height: 6, background: "var(--surface2)", borderRadius: 99, overflow: "hidden" }}>
-          <div style={{ height: "100%", width: `${Math.min((user.impactScore / 1000) * 100, 100)}%`, background: "linear-gradient(90deg, #f97316, #ea580c)", borderRadius: 99, transition: "width 1s var(--ease)" }} />
+          <div style={{ height: "100%", width: `${Math.min((impactScore / 1000) * 100, 100)}%`, background: "linear-gradient(90deg, #f97316, #ea580c)", borderRadius: 99, transition: "width 1s var(--ease)" }} />
         </div>
-        <p style={{ fontSize: 11, color: "var(--text3)", marginTop: 6 }}>{1000 - user.impactScore} pts to next milestone</p>
+        <p style={{ fontSize: 11, color: "var(--text3)", marginTop: 6 }}>{Math.max(0, 1000 - impactScore)} pts to next milestone</p>
       </div>
 
-      {/* Weekly meals chart */}
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: 20, boxShadow: "var(--shadow)" }}>
         <p style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-d)", color: "var(--text)", marginBottom: 14 }}>Meals Donated — This Week</p>
         <MiniBarChart data={IMPACT_DATA} labels={IMPACT_LABELS} />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 14 }}>
           {[
-            ["🍽️", "Total meals", totalMeals || IMPACT_DATA.reduce((a, b) => a + b, 0)],
+            ["🍽️", "Total meals",   totalMeals   || IMPACT_DATA.reduce((a, b) => a + b, 0)],
             ["♻️", "Waste reduced", `~${wasteReduced}kg`],
           ].map(([ic, lb, vl]) => (
             <div key={lb} style={{ padding: "10px 12px", background: "var(--surface2)", borderRadius: "var(--r-sm)", textAlign: "center" }}>
@@ -754,19 +711,19 @@ function AnalyticsPanel({ donations, user }) {
         </div>
       </div>
 
-      {/* Badges */}
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: 20, boxShadow: "var(--shadow)" }}>
-        <p style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-d)", color: "var(--text)", marginBottom: 12 }}>Your Badges</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {user.badges.map((b) => <GamificationBadge key={b} id={b} />)}
+      {badges.length > 0 && (
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: 20, boxShadow: "var(--shadow)" }}>
+          <p style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-d)", color: "var(--text)", marginBottom: 12 }}>Your Badges</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {badges.map((b) => <GamificationBadge key={b} id={b} />)}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Smart suggestion */}
       <div style={{ padding: "14px 16px", background: "var(--blue-lt)", borderRadius: "var(--r)", border: "1px solid #bfdbfe" }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--blue)", marginBottom: 4 }}>💡 Smart Suggestion</p>
         <p style={{ fontSize: 12.5, color: "var(--text2)", lineHeight: 1.55 }}>
-          Based on your past donations, you typically donate <strong>20–30 servings</strong>. Consider adding an afternoon donation today — demand peaks between 3–6 PM.
+          Consider adding an afternoon donation today — demand peaks between <strong>3–6 PM</strong>.
         </p>
       </div>
     </div>
@@ -788,17 +745,17 @@ function EmptyState({ icon, title, subtitle }) {
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 const NAV = [
-  { key: "overview",    icon: "⬛", label: "Overview" },
-  { key: "add",         icon: "＋", label: "Add Donation" },
-  { key: "donations",   icon: "🍱", label: "My Donations" },
-  { key: "analytics",   icon: "📊", label: "Analytics" },
-  { key: "profile",     icon: "👤", label: "Profile" },
+  { key: "overview",  icon: "⬛", label: "Overview"      },
+  { key: "add",       icon: "＋", label: "Add Donation"  },
+  { key: "donations", icon: "🍱", label: "My Donations"  },
+  { key: "analytics", icon: "📊", label: "Analytics"     },
+  { key: "profile",   icon: "👤", label: "Profile"       },
 ];
 
 function Sidebar({ tab, setTab, user, donorStatus }) {
+  const avatar = avatarFromName(user?.fullName);
   return (
     <aside className="sidebar" style={{ position: "fixed", top: 0, left: 0, width: "var(--sidebar-w)", height: "100vh", background: "var(--surface)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", zIndex: 100, padding: "0 12px 20px" }}>
-      {/* Logo */}
       <div style={{ padding: "18px 8px 22px", borderBottom: "1px solid var(--border)", marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--orange)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🐾</div>
@@ -809,7 +766,6 @@ function Sidebar({ tab, setTab, user, donorStatus }) {
         </div>
       </div>
 
-      {/* Nav */}
       <nav style={{ flex: 1 }}>
         <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "var(--text3)", textTransform: "uppercase", padding: "0 8px 8px" }}>Menu</p>
         {NAV.map((n) => (
@@ -820,11 +776,10 @@ function Sidebar({ tab, setTab, user, donorStatus }) {
         ))}
       </nav>
 
-      {/* User footer */}
-      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, display: "flex", alignItems: "center", gap: 10, padding: "14px 8px 0" }}>
-        <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--orange)", flexShrink: 0 }}>{user.avatar}</div>
+      <div style={{ borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, padding: "14px 8px 0" }}>
+        <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--orange)", flexShrink: 0 }}>{avatar}</div>
         <div style={{ overflow: "hidden", flex: 1 }}>
-          <p style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</p>
+          <p style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user?.fullName}</p>
           <VerifBadge status={donorStatus} />
         </div>
       </div>
@@ -832,12 +787,18 @@ function Sidebar({ tab, setTab, user, donorStatus }) {
   );
 }
 
-
 // ─── Top navbar ───────────────────────────────────────────────────────────────
 
-const TAB_TITLES = { overview: "Dashboard Overview", add: "Add Donation", donations: "My Donations", analytics: "Impact Analytics", profile: "Profile" };
+const TAB_TITLES = {
+  overview:  "Dashboard Overview",
+  add:       "Add Donation",
+  donations: "My Donations",
+  analytics: "Impact Analytics",
+  profile:   "Profile",
+};
 
-function TopNav({ tab, darkMode, setDarkMode, user, expiringSoon, onLogout }) {
+function TopNav({ tab, darkMode, setDarkMode, user, expiringSoon }) {
+  const avatar = avatarFromName(user?.fullName);
   return (
     <header style={{ position: "fixed", top: 0, left: "var(--sidebar-w)", right: 0, height: "var(--nav-h)", background: "var(--surface)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 26px", zIndex: 99 }}>
       <h1 style={{ fontSize: 16.5, fontWeight: 600, fontFamily: "var(--font-d)", color: "var(--text)" }}>{TAB_TITLES[tab]}</h1>
@@ -850,20 +811,11 @@ function TopNav({ tab, darkMode, setDarkMode, user, expiringSoon, onLogout }) {
         <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => setDarkMode((p) => !p)}>
           {darkMode ? "☀ Light" : "🌙 Dark"}
         </button>
-        <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "var(--orange)", border: "1.5px solid var(--orange-md)" }}>{user.avatar}</div>
-     <button
-  onClick={onLogout}
-  style={{
-    padding: "8px 12px",
-    background: "#f44336",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer"
-  }}
->
-  Logout
-</button>
+        <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "var(--orange)", border: "1.5px solid var(--orange-md)" }}>
+          {avatar}
+        </div>
+        {/* ✅ Logout uses module-level handleLogout */}
+        <button className="btn-logout" onClick={handleLogout}>Logout</button>
       </div>
     </header>
   );
@@ -873,15 +825,14 @@ function TopNav({ tab, darkMode, setDarkMode, user, expiringSoon, onLogout }) {
 
 function OverviewTab({ donations, loading, user, setTab, donorStatus, onApplyVerification }) {
   const stats = useMemo(() => ({
-    total: donations.length,
-    active: donations.filter((d) => d.status === "AVAILABLE").length,
+    total:   donations.length,
+    active:  donations.filter((d) => d.status === "AVAILABLE").length,
     claimed: donations.filter((d) => d.status === "CLAIMED").length,
-    meals: donations.filter((d) => d.unit === "servings").reduce((s, d) => s + d.quantity, 0),
+    meals:   donations.filter((d) => d.unit === "servings").reduce((s, d) => s + d.quantity, 0),
   }), [donations]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Verification banner */}
       {donorStatus !== "VERIFIED" && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", background: "var(--green-lt)", border: "1px solid #bbf7d0", borderRadius: "var(--r)", flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -891,16 +842,11 @@ function OverviewTab({ donations, loading, user, setTab, donorStatus, onApplyVer
               <p style={{ fontSize: 12, color: "var(--green)" }}>Verified donors are trusted by our recipient network.</p>
             </div>
           </div>
-          {donorStatus === "UNVERIFIED" && (
-            <button className="btn btn-orange" onClick={onApplyVerification}>Apply for Verification</button>
-          )}
-          {donorStatus === "PENDING" && (
-            <span style={{ fontSize: 13, color: "var(--amber)", fontWeight: 600 }}>⏳ Verification under review</span>
-          )}
+          {donorStatus === "UNVERIFIED" && <button className="btn btn-orange" onClick={onApplyVerification}>Apply for Verification</button>}
+          {donorStatus === "PENDING"    && <span style={{ fontSize: 13, color: "var(--amber)", fontWeight: 600 }}>⏳ Verification under review</span>}
         </div>
       )}
 
-      {/* Stats */}
       {loading ? (
         <div className="stats-row" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
           {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 88, borderRadius: "var(--r)" }} />)}
@@ -908,13 +854,12 @@ function OverviewTab({ donations, loading, user, setTab, donorStatus, onApplyVer
       ) : (
         <div className="stats-row" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
           <StatCard icon="🍱" label="Total Donations" value={stats.total} />
-          <StatCard icon="✅" label="Active Listings" value={stats.active} color="var(--green)" bgColor="var(--green-lt)" />
-          <StatCard icon="🤝" label="Claimed" value={stats.claimed} color="var(--blue)" bgColor="var(--blue-lt)" />
-          <StatCard icon="🍽️" label="Meals Donated" value={stats.meals || "–"} color="var(--amber)" bgColor="var(--amber-lt)" />
+          <StatCard icon="✅" label="Active Listings"  value={stats.active}  color="var(--green)" bgColor="var(--green-lt)" />
+          <StatCard icon="🤝" label="Claimed"          value={stats.claimed} color="var(--blue)"  bgColor="var(--blue-lt)"  />
+          <StatCard icon="🍽️" label="Meals Donated"   value={stats.meals || "–"} color="var(--amber)" bgColor="var(--amber-lt)" />
         </div>
       )}
 
-      {/* Quick actions */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div className="d-card" onClick={() => setTab("add")} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "18px 20px", cursor: "pointer", boxShadow: "var(--shadow)" }}>
           <p style={{ fontSize: 28, marginBottom: 8 }}>＋</p>
@@ -928,7 +873,6 @@ function OverviewTab({ donations, loading, user, setTab, donorStatus, onApplyVer
         </div>
       </div>
 
-      {/* Recent claims */}
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: 20, boxShadow: "var(--shadow)" }}>
         <p style={{ fontSize: 14, fontWeight: 600, fontFamily: "var(--font-d)", color: "var(--text)", marginBottom: 14 }}>Recent Claims</p>
         {donations.filter((d) => d.claimedBy).length === 0 ? (
@@ -957,19 +901,31 @@ function OverviewTab({ donations, loading, user, setTab, donorStatus, onApplyVer
 
 function ProfileTab({ user, donorStatus }) {
   const [saved, setSaved] = useState(false);
+
+  // ✅ Use real fields from localStorage user object
+  const fields = [
+    ["Full Name", user?.fullName  || ""],
+    ["Email",     user?.email     || ""],
+    ["Phone",     user?.phone     || ""],
+    ["City",      user?.city      || ""],
+    ["State",     user?.state     || ""],
+  ];
+
   return (
     <div style={{ maxWidth: 520 }}>
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: 24, boxShadow: "var(--shadow)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 22 }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, color: "var(--orange)", border: "2px solid var(--orange-md)" }}>{user.avatar}</div>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--orange-lt)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, color: "var(--orange)", border: "2px solid var(--orange-md)" }}>
+            {avatarFromName(user?.fullName)}
+          </div>
           <div>
-            <h2 style={{ fontSize: 18, fontFamily: "var(--font-d)", fontWeight: 700, color: "var(--text)" }}>{user.name}</h2>
-            <p style={{ fontSize: 12.5, color: "var(--text3)" }}>{user.org}</p>
+            <h2 style={{ fontSize: 18, fontFamily: "var(--font-d)", fontWeight: 700, color: "var(--text)" }}>{user?.fullName}</h2>
+            <p style={{ fontSize: 12.5, color: "var(--text3)" }}>{user?.email}</p>
             <VerifBadge status={donorStatus} />
           </div>
         </div>
 
-        {[["Full Name", user.name], ["Organisation", user.org], ["City", "Ludhiana"], ["Phone", "+91 98765 43210"]].map(([lbl, val]) => (
+        {fields.map(([lbl, val]) => (
           <div key={lbl} style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 11.5, fontWeight: 600, color: "var(--text3)", letterSpacing: .3, display: "block", marginBottom: 4 }}>{lbl}</label>
             <input className="f-input" defaultValue={val} />
@@ -991,108 +947,73 @@ const StyleTag = () => <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} /
 // ─── Root component ───────────────────────────────────────────────────────────
 
 export default function DonorDashboard() {
-  const [tab, setTab] = useState("overview");
-  const [donorStatus, setDonorStatus] = useState("UNVERIFIED");
-  const [statusLoading, setStatusLoading] = useState(true);
-  const [donations, setDonations] = useState([]);
+  const [tab,              setTab]              = useState("overview");
+  const [donorStatus,      setDonorStatus]      = useState("UNVERIFIED");
+  const [statusLoading,    setStatusLoading]    = useState(true);
+  const [donations,        setDonations]        = useState([]);
   const [donationsLoading, setDonationsLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode,         setDarkMode]         = useState(false);
   const { toasts, add: toast } = useToasts();
 
   const user = getUser();
 
-useEffect(() => {
-  if (!user) {
-    window.location.href = "/login";
-  }
-}, [user]);
-//logout handler
-  const handleLogout = () => {
-  localStorage.removeItem("user");
-  window.location.href = "/login";
-};
-  // Apply dark mode
+  useEffect(() => {
+    if (!user) window.location.href = "/login";
+  }, []);
+
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
   // Fetch donor status
   useEffect(() => {
-    const user = getUser();
-
-api.get("/users/me/status", {
-  headers: {
-    "User-Id": user.id
-  }
-})
+    const u = getUser();
+    api.get("/users/me/status", { headers: { "User-Id": u.id } })
       .then((r) => setDonorStatus(r.data))
       .catch(() => toast("Failed to load donor status.", "error"))
       .finally(() => setStatusLoading(false));
   }, []);
 
-
-
   // Fetch donations
-
-  
   const fetchDonations = useCallback(async () => {
-  try {
-    setDonationsLoading(true);
-    const user = getUser()
-    const r = await api.get("/donations/my", {
-  headers: {
-    "User-Id": user.id
-  }
-});
+    try {
+      setDonationsLoading(true);
+      const u = getUser();
+      const r = await api.get("/donations/my", { headers: { "User-Id": u.id } });
 
-    const mapped = r.data.map(d => ({
-      ...d,
-      foodType: "veg",
-      imagePreview: null,
-      status: d.status || "AVAILABLE",
-      claimedBy: d.claimedBy
-        ? {
-            name: d.claimedBy.fullName,
-            claimedAt: d.claimedBy.claimedAt || new Date().toISOString(),
-            status: "PENDING",
-          }
-        : null,
-    }));
+      const mapped = r.data.map((d) => ({
+        ...d,
+        // ✅ Use foodType from backend — no longer hardcoded
+        foodType: d.foodType || "veg",
+        status:   d.status   || "AVAILABLE",
+        claimedBy: d.claimedBy
+          ? { name: d.claimedBy.fullName, claimedAt: d.claimedBy.claimedAt || new Date().toISOString(), status: "PENDING" }
+          : null,
+      }));
 
-    setDonations(mapped);
+      setDonations(mapped);
+    } catch {
+      toast("Failed to load donations.", "error");
+    } finally {
+      setDonationsLoading(false);
+    }
+  }, [toast]);
 
-  } catch {
-    toast("Failed to load donations.", "error");
-  } finally {
-    setDonationsLoading(false);
-  }
-}, [toast]);
-useEffect(() => {
-  fetchDonations();
-}, [fetchDonations]);
+  useEffect(() => { fetchDonations(); }, [fetchDonations]);
 
-  // Verification apply
+  // Apply for verification
   const handleApplyVerification = async () => {
-  try {
-    const user = getUser();
+    try {
+      const u = getUser();
+      await api.post("/verification/apply", null, { headers: { "User-Id": u.id } });
+      setDonorStatus("PENDING");
+      toast("Verification request submitted!", "success");
+    } catch {
+      toast("Failed to apply for verification.", "error");
+    }
+  };
 
-    await api.post("/verification/apply", null, {
-      headers: {
-        "User-Id": user.id
-      }
-    });
-
-    setDonorStatus("PENDING"); // ✅ THIS is correct
-
-    toast("Verification request submitted!", "success");
-
-  } catch (err) {
-    toast("Failed to apply for verification", "error");
-  }
-};
-
-  // Donation CRUD handlers
-  const handleDonationCreated = useCallback(async() => {
+  const handleDonationCreated = useCallback(async () => {
     await fetchDonations();
     setTab("donations");
   }, [fetchDonations]);
@@ -1112,71 +1033,42 @@ useEffect(() => {
     [donations]
   );
 
-  if (statusLoading) {
-    return (
-      <>
-        <StyleTag />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", flexDirection: "column", gap: 14 }}>
-          <div style={{ fontSize: 32 }}>🐾</div>
-          <p style={{ fontSize: 14, color: "var(--text3)", fontFamily: "var(--font)" }}>Loading PetFull dashboard…</p>
-        </div>
-      </>
-    );
-  }
+  if (statusLoading) return (
+    <>
+      <StyleTag />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", flexDirection: "column", gap: 14 }}>
+        <div style={{ fontSize: 32 }}>🐾</div>
+        <p style={{ fontSize: 14, color: "var(--text3)", fontFamily: "var(--font)" }}>Loading PetFull dashboard…</p>
+      </div>
+    </>
+  );
+
+  if (!user) return null;
 
   return (
     <>
       <StyleTag />
-
       <Sidebar tab={tab} setTab={setTab} user={user} donorStatus={donorStatus} />
-
-     <TopNav 
-  tab={tab} 
-  darkMode={darkMode} 
-  setDarkMode={setDarkMode} 
-  user={user} 
-  expiringSoon={expiringSoon}
-  onLogout={handleLogout}
-/>
+      <TopNav  tab={tab} darkMode={darkMode} setDarkMode={setDarkMode} user={user} expiringSoon={expiringSoon} />
 
       <main className="main" style={{ marginLeft: "var(--sidebar-w)", marginTop: "var(--nav-h)", padding: "28px 26px", minHeight: "calc(100vh - var(--nav-h))" }}>
-
         {tab === "overview" && (
-          <OverviewTab
-            donations={donations}
-            loading={donationsLoading}
-            user={user}
-            setTab={setTab}
-            donorStatus={donorStatus}
-            onApplyVerification={handleApplyVerification}
-          />
+          <OverviewTab donations={donations} loading={donationsLoading} user={user} setTab={setTab} donorStatus={donorStatus} onApplyVerification={handleApplyVerification} />
         )}
-
         {tab === "add" && (
           <div style={{ maxWidth: 580 }}>
             <AddDonationForm isVerified={donorStatus === "VERIFIED"} onCreated={handleDonationCreated} toast={toast} />
           </div>
         )}
-
         {tab === "donations" && (
-          <MyDonationsPanel
-            donations={donations}
-            loading={donationsLoading}
-            onDelete={handleDelete}
-            onMarkComplete={handleMarkComplete}
-            toast={toast}
-          />
+          <MyDonationsPanel donations={donations} loading={donationsLoading} onDelete={handleDelete} onMarkComplete={handleMarkComplete} toast={toast} />
         )}
-
         {tab === "analytics" && (
           <div style={{ maxWidth: 520 }}>
             <AnalyticsPanel donations={donations} user={user} />
           </div>
         )}
-
-        {tab === "profile" && (
-          <ProfileTab user={user} donorStatus={donorStatus} />
-        )}
+        {tab === "profile" && <ProfileTab user={user} donorStatus={donorStatus} />}
       </main>
 
       <ToastStack toasts={toasts} />
