@@ -1,14 +1,14 @@
 package com.petfull.backend.service;
-import com.petfull.backend.repository.UserRepository;
-import com.petfull.backend.model.User;
 
 import com.petfull.backend.model.Donation;
+import com.petfull.backend.model.User;
 import com.petfull.backend.repository.DonationRepository;
+import com.petfull.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-
-// DonationService.java - clean version
+import java.util.stream.Collectors;
 
 @Service
 public class DonationService {
@@ -21,6 +21,8 @@ public class DonationService {
         this.userRepository = userRepository;
     }
 
+    // ── Create ────────────────────────────────────────────────────────────────
+
     public Donation createDonation(Donation donation, Long userId) {
         User donor = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -29,39 +31,29 @@ public class DonationService {
         donation.setStatus("AVAILABLE");
 
         Donation saved = donationRepository.save(donation);
-
-        // Force flush and reload so donor_id is confirmed in DB
         donationRepository.flush();
+
         return donationRepository.findById(saved.getId())
                 .orElseThrow(() -> new RuntimeException("Failed to reload donation after save"));
     }
 
+    // ── Read ──────────────────────────────────────────────────────────────────
+
     public List<Donation> getDonationsByUser(Long userId) {
-        // Verify user exists first
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("User not found with id: " + userId);
         }
         return donationRepository.findByDonor_Id(userId);
     }
 
-    public void deleteDonation(Long donationId, Long userId) {
-        Donation donation = donationRepository.findById(donationId)
-                .orElseThrow(() -> new RuntimeException("Donation not found: " + donationId));
-
-        if (!donation.getDonor().getId().equals(userId)) {
-            throw new SecurityException("User " + userId + " is not authorized to delete donation " + donationId);
-        }
-
-        donationRepository.delete(donation);
-    }
-
     public List<Donation> getAvailableDonations() {
-        List<Donation> donations = donationRepository.findByStatus("AVAILABLE");
-        
-        List<Donation> expired = donations.stream()
+        // Mark expired donations first
+        List<Donation> available = donationRepository.findByStatus("AVAILABLE");
+
+        List<Donation> expired = available.stream()
                 .filter(d -> d.getExpiryDateTime() != null &&
-                             d.getExpiryDateTime().isBefore(java.time.LocalDateTime.now()))
-                .collect(java.util.stream.Collectors.toList());
+                             d.getExpiryDateTime().isBefore(LocalDateTime.now()))
+                .collect(Collectors.toList());
 
         if (!expired.isEmpty()) {
             expired.forEach(d -> d.setStatus("EXPIRED"));
@@ -71,24 +63,49 @@ public class DonationService {
         return donationRepository.findByStatus("AVAILABLE");
     }
 
+    public List<Donation> getClaimedDonations(Long userId) {
+        return donationRepository.findByClaimedBy_Id(userId);
+    }
+
+    // ── Claim ─────────────────────────────────────────────────────────────────
+
     public Donation claimDonation(Long donationId, Long userId) {
         Donation donation = donationRepository.findById(donationId)
                 .orElseThrow(() -> new RuntimeException("Donation not found: " + donationId));
 
-        if (!donation.getStatus().equals("AVAILABLE")) {
-            throw new RuntimeException("Donation is not available for claiming");
+        // Case-insensitive status check so "available" or "AVAILABLE" both work
+        if (!"AVAILABLE".equalsIgnoreCase(donation.getStatus())) {
+            throw new RuntimeException(
+                "Donation is not available for claiming. Current status: " + donation.getStatus()
+            );
         }
 
-        User user = userRepository.findById(userId)
+        // Prevent a donor from claiming their own donation
+        if (donation.getDonor().getId().equals(userId)) {
+            throw new RuntimeException("You cannot claim your own donation");
+        }
+
+        User claimer = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
 
         donation.setStatus("CLAIMED");
-        donation.setClaimedBy(user);
+        donation.setClaimedBy(claimer);
 
         return donationRepository.save(donation);
     }
 
-    public List<Donation> getClaimedDonations(Long userId) {
-        return donationRepository.findByClaimedBy_Id(userId);
+    // ── Delete ────────────────────────────────────────────────────────────────
+
+    public void deleteDonation(Long donationId, Long userId) {
+        Donation donation = donationRepository.findById(donationId)
+                .orElseThrow(() -> new RuntimeException("Donation not found: " + donationId));
+
+        if (!donation.getDonor().getId().equals(userId)) {
+            throw new SecurityException(
+                "User " + userId + " is not authorized to delete donation " + donationId
+            );
+        }
+
+        donationRepository.delete(donation);
     }
 }

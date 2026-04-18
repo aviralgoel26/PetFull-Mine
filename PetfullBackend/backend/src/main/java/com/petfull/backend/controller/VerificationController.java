@@ -17,14 +17,18 @@ public class VerificationController {
     }
 
     @PostMapping("/apply")
-    public ResponseEntity<?> applyForVerification(
-            @RequestHeader("User-Id") Long userId
-    ) {
+    public ResponseEntity<?> applyForVerification(@RequestHeader("User-Id") Long userId) {
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
 
         if ("VERIFIED".equalsIgnoreCase(user.getDonorStatus())) {
             return ResponseEntity.badRequest().body("Already verified");
+        }
+
+        // ✅ Prevent duplicate pending requests
+        if ("PENDING".equalsIgnoreCase(user.getDonorStatus())) {
+            return ResponseEntity.badRequest().body("Verification already under review");
         }
 
         user.setDonorStatus("PENDING");
