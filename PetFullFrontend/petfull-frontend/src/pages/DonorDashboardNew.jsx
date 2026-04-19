@@ -959,7 +959,7 @@ export default function DonorDashboard() {
 
   useEffect(() => {
     if (!user) window.location.href = "/login";
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
@@ -972,7 +972,7 @@ export default function DonorDashboard() {
       .then((r) => setDonorStatus(r.data))
       .catch(() => toast("Failed to load donor status.", "error"))
       .finally(() => setStatusLoading(false));
-  }, []);
+  }, [toast]);
 
   // Fetch donations
   const fetchDonations = useCallback(async () => {

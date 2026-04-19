@@ -802,7 +802,7 @@ export default function RecipientDashboard() {
   // Redirect if not logged in
   useEffect(() => {
     if (!user) window.location.href = "/login";
-  }, []);
+  }, [user]);
 
   // Dark mode
   useEffect(() => {
@@ -845,7 +845,7 @@ export default function RecipientDashboard() {
     } finally {
       setHistoryLoading(false);
     }
-  }, [user?.id]);
+  }, [user]);
 
   useEffect(() => {
     fetchDonations();
