@@ -850,7 +850,7 @@ export default function RecipientDashboard() {
   useEffect(() => {
     fetchDonations();
     fetchHistory();
-  }, [fetchDonations, fetchHistory]);
+  }, []);
 
   // Auto-refresh every 60s
   useEffect(() => {
@@ -859,7 +859,7 @@ export default function RecipientDashboard() {
       addToast("Donations refreshed!", "info", 2000);
     }, 60_000);
     return () => clearInterval(interval);
-  }, [fetchDonations, addToast]);
+  }, []);
 
   // Claim handler
   const handleConfirmClaim = async () => {
