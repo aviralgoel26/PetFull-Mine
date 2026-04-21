@@ -14,7 +14,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://petfull.netlify.app")
+                        .allowedOrigins("http://localhost:3000","https://petfull.netlify.app")
                         .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
