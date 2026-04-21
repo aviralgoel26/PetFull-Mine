@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const API = "http://localhost:8080/api";
+const API = "https://petfull-mine.onrender.com/api";
 
 /* ─── Global Styles ──────────────────────────────────────────────────────────── */
 const GLOBAL_CSS = `
