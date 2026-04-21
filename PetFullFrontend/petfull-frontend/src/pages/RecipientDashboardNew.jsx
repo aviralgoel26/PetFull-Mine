@@ -850,7 +850,7 @@ export default function RecipientDashboard() {
   useEffect(() => {
     fetchDonations();
     fetchHistory();
-  }, []);
+  },[]);
 
   // Auto-refresh every 60s
   useEffect(() => {
