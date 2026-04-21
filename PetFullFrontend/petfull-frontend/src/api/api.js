@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: "https://petfull-mine.onrender.com/api",
 });
 
 // TEMP: userId header (later replaced by JWT token)

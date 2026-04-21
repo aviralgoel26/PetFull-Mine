@@ -797,7 +797,7 @@ export default function RecipientDashboard() {
   const [darkMode, setDarkMode]             = useState(false);
   const { toasts, addToast }                = useToasts();
 
-  const user = getUser();
+  const user = useMemo(() => getUser(), []);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -850,7 +850,7 @@ export default function RecipientDashboard() {
   useEffect(() => {
     fetchDonations();
     fetchHistory();
-  },[]);
+  },[fetchDonations, fetchHistory]);
 
   // Auto-refresh every 60s
   useEffect(() => {
@@ -859,7 +859,7 @@ export default function RecipientDashboard() {
       addToast("Donations refreshed!", "info", 2000);
     }, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchDonations, addToast]);
 
   // Claim handler
   const handleConfirmClaim = async () => {
