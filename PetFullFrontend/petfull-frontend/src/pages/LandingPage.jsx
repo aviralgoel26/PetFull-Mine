@@ -1,16 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import myLogo from "/"; // Adjust path to your file
+
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg-main:    #f8f9fd;   /* Soft lavender/gray from your dashboard */
+    --bg-main:    #f8f9fd;
     --card-bg:    #ffffff;
-    --primary:    #e8621a;   /* Dashboard orange accent */
-    --green:      #2d5a27;   /* Kept for heritage but adjusted for light theme */
-    --accent-v:   #6366f1;   /* Modern Indigo */
+    --primary:    #e8621a;
+    --accent-v:   #6366f1;
     --text:       #1e293b;
     --muted:      #64748b;
     --border:     #e2e8f0;
@@ -27,7 +26,6 @@ const CSS = `
     overflow-x: hidden;
   }
 
-  /* ── Noise texture (Lightened for pleasant look) ── */
   body::before {
     content: '';
     position: fixed;
@@ -38,12 +36,6 @@ const CSS = `
     opacity: .3;
   }
 
-  /* ── Scrollbar ── */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--bg-main); }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
-
-  /* ── Nav ── */
   .nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
@@ -62,11 +54,6 @@ const CSS = `
     font-family: var(--font-d); font-size: 22px; font-weight: 900;
     color: var(--text); text-decoration: none;
   }
-  .nav-logo-paw {
-    width: 34px; height: 34px; border-radius: 10px;
-    background: var(--text); color: #fff; display: flex; align-items: center;
-    justify-content: center; font-size: 17px;
-  }
   .nav-links { display: flex; align-items: center; gap: 8px; }
   .nav-link {
     padding: 8px 18px; border-radius: 99px; font-size: 14px;
@@ -83,7 +70,6 @@ const CSS = `
   }
   .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
 
-  /* ── Hero ── */
   .hero {
     min-height: 100vh;
     display: flex; flex-direction: column;
@@ -156,8 +142,7 @@ const CSS = `
   }
   .hero-stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; }
 
-  /* ── Marquee ── */
-  .marquee-wrap { background: #fff; padding: 16px 0; overflow: hidden; border-y: 1px solid var(--border); }
+  .marquee-wrap { background: #fff; padding: 16px 0; overflow: hidden; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
   .marquee-track { display: flex; gap: 0; animation: marquee 28s linear infinite; width: max-content; }
   .marquee-item {
     display: inline-flex; align-items: center; gap: 16px;
@@ -168,7 +153,6 @@ const CSS = `
   .marquee-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-  /* ── General Section Styles ── */
   .section { padding: 120px 60px; }
   .section-tag {
     display: inline-flex; align-items: center; gap: 8px;
@@ -184,7 +168,6 @@ const CSS = `
   .section-h2 em { font-style: italic; color: var(--accent-v); font-weight: 300; }
   .section-sub { font-size: 17px; color: var(--muted); line-height: 1.6; max-width: 480px; }
 
-  /* ── How It Works (Steps) ── */
   .steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 72px; }
   .step-card {
     background: #fff; border-radius: 24px;
@@ -205,8 +188,7 @@ const CSS = `
   .step-title { font-family: var(--font-d); font-size: 26px; font-weight: 700; margin-bottom: 12px; }
   .step-sub { font-size: 15px; line-height: 1.65; color: var(--muted); }
 
-  /* ── Features ── */
-  .features-section { padding: 120px 60px; background: #fff; border-y: 1px solid var(--border); }
+  .features-section { padding: 120px 60px; background: #fff; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
   .features-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 24px; margin-top: 72px; }
   .feature-card {
     border-radius: 24px; padding: 36px;
@@ -224,7 +206,6 @@ const CSS = `
   .feature-title { font-family: var(--font-d); font-size: 22px; font-weight: 700; margin-bottom: 10px; }
   .feature-desc { font-size: 14.5px; color: var(--muted); line-height: 1.65; }
 
-  /* ── Impact ── */
   .impact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; margin-top: 72px; }
   .impact-visual { position: relative; height: 480px; }
   .impact-card-big {
@@ -253,7 +234,6 @@ const CSS = `
     font-size: 12px; color: var(--accent-v); flex-shrink: 0;
   }
 
-  /* ── Roles ── */
   .roles-section { padding: 120px 60px; background: #fff; border-top: 1px solid var(--border); }
   .roles-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 72px; }
   .role-card {
@@ -267,14 +247,10 @@ const CSS = `
   .role-perk { font-size: 13px; color: var(--text); font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
   .role-perk::before { content: '✓'; color: var(--accent-v); }
 
-  /* ── Testimonials ── */
   .testimonial-card { background: #fff; border-radius: 24px; padding: 36px; border: 1px solid var(--border); transition: 300ms; }
   .testimonial-card:nth-child(2) { background: var(--accent-v); color: #fff; margin-top: 28px; border: none; }
-  .testimonial-card:nth-child(2) .testimonial-text, .testimonial-card:nth-child(2) .testimonial-role { color: rgba(255,255,255,0.7); }
-  .testimonial-card:nth-child(2) .testimonial-name { color: #fff; }
   .testimonial-card:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
 
-  /* ── CTA ── */
   .cta-section {
     margin: 0 60px 120px; border-radius: 36px;
     background: var(--text); padding: 100px 80px;
@@ -284,15 +260,12 @@ const CSS = `
   .cta-h2 { font-family: var(--font-d); font-size: clamp(36px,4vw,64px); font-weight: 900; color: #fff; margin-bottom: 20px; }
   .cta-sub { font-size: 18px; color: rgba(255,255,255,.6); margin-bottom: 44px; max-width: 500px; }
 
-  /* ── Footer ── */
   .footer { background: #fff; border-top: 1px solid var(--border); padding: 80px 60px 40px; }
   .footer-logo-text { font-family: var(--font-d); font-size: 20px; font-weight: 900; color: var(--text); }
   .footer-col-title { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text); margin-bottom: 20px; }
   .footer-link { font-size: 14px; color: var(--muted); text-decoration: none; transition: 200ms; }
   .footer-link:hover { color: var(--primary); }
 
-  /* ── Animations ── */
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
   .reveal { opacity: 0; transform: translateY(32px); transition: opacity .8s ease, transform .8s ease; }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
@@ -304,7 +277,6 @@ const CSS = `
   }
 `;
 
-// Animation Hook
 function useCounter(target, duration = 2000, start = false) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -322,7 +294,6 @@ function useCounter(target, duration = 2000, start = false) {
   return count;
 }
 
-// Reveal Hook
 function useReveal() {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -349,6 +320,9 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef(null);
+  
+  // Use public folder path correctly for React
+  const logoPath = process.env.PUBLIC_URL + "/PetFullLogo.jpg";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -378,13 +352,9 @@ export default function LandingPage() {
 
       <nav className={`nav${scrolled ? " scrolled" : ""}`}>
         <a href="/" className="nav-logo">
-  <img 
-    src="/PetFullLogo.jpg" 
-    alt="PetFull Logo" 
-    style={{ width: '34px', height: '34px', borderRadius: '10px', objectFit: 'cover' }} 
-  />
-  <span style={{ marginLeft: '10px' }}>PetFull</span>
-</a>
+          <img src={logoPath} alt="PetFull Logo" style={{ width: '34px', height: '34px', borderRadius: '10px', objectFit: 'cover' }} />
+          <span style={{marginLeft: '10px'}}>PetFull</span>
+        </a>
         <div className="nav-links">
           <a href="#how" className="nav-link">Process</a>
           <a href="#impact" className="nav-link">Impact</a>
@@ -449,7 +419,7 @@ export default function LandingPage() {
           {[
             { icon:"✓", title:"Verified system", desc:"Donors are verified to ensure food safety and trust." },
             { icon:"⏱", title:"Expiry alerts", desc:"Smart notifications when food is about to expire." },
-            { icon:"📊", title:"Impact analytics", desc:"Track meals and waste reduction scores.", large:true, extra:"Every milestone represents real food reaching real people. The dashboard celebrates your most dedicated moments." },
+            { icon:"📊", title:"Impact analytics", desc:"Track meals and waste reduction scores.", large:true, extra:"Every milestone represents real food reaching real people." },
           ].map((f, i) => (
             <div key={i} className={`feature-card ${f.large ? "large" : ""} reveal ${featVisible ? "visible" : ""}`}>
               <div>
@@ -531,14 +501,10 @@ export default function LandingPage() {
       <footer className="footer">
         <div style={{display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:'40px'}}>
           <div>
-            <div className="nav-logo" style={{ marginBottom: '20px' }}>
-  <img 
-    src="/cd068eaa-4022-44b6-a781-b530207b1a9...jpg" 
-    alt="PetFull Logo" 
-    style={{ width: '34px', height: '34px', borderRadius: '10px', objectFit: 'cover' }} 
-  />
-  <span className="footer-logo-text" style={{ marginLeft: '10px' }}>PetFull</span>
-</div>
+            <div className="nav-logo" style={{marginBottom:'20px'}}>
+              <img src={logoPath} alt="PetFull Logo" style={{ width: '34px', height: '34px', borderRadius: '10px', objectFit: 'cover' }} />
+              <span className="footer-logo-text" style={{marginLeft: '10px'}}>PetFull</span>
+            </div>
             <p style={{maxWidth:'300px', color:'var(--muted)'}}>Building hunger-free communities, one meal at a time.</p>
           </div>
           <div style={{display:'flex', gap:'60px'}}>
