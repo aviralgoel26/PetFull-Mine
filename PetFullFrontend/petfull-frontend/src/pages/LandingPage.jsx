@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-
+import myLogo from "/"; // Adjust path to your file
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -378,9 +378,13 @@ export default function LandingPage() {
 
       <nav className={`nav${scrolled ? " scrolled" : ""}`}>
         <a href="/" className="nav-logo">
-          <div className="nav-logo-paw">🐾</div>
-          PetFull
-        </a>
+  <img 
+    src="/PetFullLogo.jpg" 
+    alt="PetFull Logo" 
+    style={{ width: '34px', height: '34px', borderRadius: '10px', objectFit: 'cover' }} 
+  />
+  <span style={{ marginLeft: '10px' }}>PetFull</span>
+</a>
         <div className="nav-links">
           <a href="#how" className="nav-link">Process</a>
           <a href="#impact" className="nav-link">Impact</a>
@@ -527,10 +531,14 @@ export default function LandingPage() {
       <footer className="footer">
         <div style={{display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:'40px'}}>
           <div>
-            <div className="nav-logo" style={{marginBottom:'20px'}}>
-              <div className="nav-logo-paw">🐾</div>
-              <span className="footer-logo-text">PetFull</span>
-            </div>
+            <div className="nav-logo" style={{ marginBottom: '20px' }}>
+  <img 
+    src="/cd068eaa-4022-44b6-a781-b530207b1a9...jpg" 
+    alt="PetFull Logo" 
+    style={{ width: '34px', height: '34px', borderRadius: '10px', objectFit: 'cover' }} 
+  />
+  <span className="footer-logo-text" style={{ marginLeft: '10px' }}>PetFull</span>
+</div>
             <p style={{maxWidth:'300px', color:'var(--muted)'}}>Building hunger-free communities, one meal at a time.</p>
           </div>
           <div style={{display:'flex', gap:'60px'}}>
