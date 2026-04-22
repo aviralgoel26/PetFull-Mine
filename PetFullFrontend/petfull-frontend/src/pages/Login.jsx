@@ -115,7 +115,7 @@ const Login = () => {
             <p><span className="font-semibold">Donor:</span> donor@example.com</p>
             <p><span className="font-semibold">Recipient:</span> recipient@example.com</p>
             <p><span className="font-semibold">Admin:</span> admin@example.com</p>
-            <p className="text-xs mt-2 italic opacity-80">Password for all: (Use any password)</p>
+            <p className="text-xs mt-2 italic opacity-80">Password for all: 123456</p>
           </div>
         </div>
 
