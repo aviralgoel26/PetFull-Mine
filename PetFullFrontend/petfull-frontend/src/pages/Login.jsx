@@ -107,6 +107,17 @@ const Login = () => {
             Create an account
           </a>
         </p>
+        <div className="mt-8 p-4 bg-[#f0f7ff] border border-[#d0e6ff] rounded-xl">
+          <h3 className="text-xs font-bold text-[#2563eb] uppercase tracking-wider mb-2">
+            Demo Credentials
+          </h3>
+          <div className="space-y-1 text-sm text-[#1e40af]">
+            <p><span className="font-semibold">Donor:</span> donor@example.com</p>
+            <p><span className="font-semibold">Recipient:</span> recipient@example.com</p>
+            <p><span className="font-semibold">Admin:</span> admin@example.com</p>
+            <p className="text-xs mt-2 italic opacity-80">Password for all: (Use any password)</p>
+          </div>
+        </div>
 
       </div>
     </div>
