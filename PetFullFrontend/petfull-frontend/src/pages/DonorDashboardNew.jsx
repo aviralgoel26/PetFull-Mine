@@ -758,7 +758,7 @@ function Sidebar({ tab, setTab, user, donorStatus }) {
     <aside className="sidebar" style={{ position: "fixed", top: 0, left: 0, width: "var(--sidebar-w)", height: "100vh", background: "var(--surface)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", zIndex: 100, padding: "0 12px 20px" }}>
       <div style={{ padding: "18px 8px 22px", borderBottom: "1px solid var(--border)", marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/cd068eaa-4022-44b6-a781-b530207b1a91.jpg" alt="PetFull logo" style={{ width: 34, height: 34, borderRadius: 9, objectFit: "cover" }} />
+          <img src="/PetFullLogo.jpg" alt="PetFull logo" style={{ width: 34, height: 34, borderRadius: 9, objectFit: "cover" }} />
           <div>
             <p style={{ fontFamily: "var(--font-d)", fontWeight: 700, fontSize: 17, color: "var(--text)", lineHeight: 1 }}>PetFull</p>
             <p style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>Donor Portal</p>

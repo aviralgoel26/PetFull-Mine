@@ -56,7 +56,7 @@ const Login = () => {
         {/* Header */}
         <div className="text-center mb-6">
           <img
-            src="/cd068eaa-4022-44b6-a781-b530207b1a91.jpg"
+            src="/PetFullLogo.jpg"
             alt="PetFull logo"
             className="w-20 mx-auto animate-bounce"
           />

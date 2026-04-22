@@ -505,7 +505,7 @@ function Sidebar({ activeTab, setActiveTab, user }) {
       {/* Logo */}
       <div style={{ padding: "20px 8px 24px", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/cd068eaa-4022-44b6-a781-b530207b1a91.jpg" alt="PetFull logo" style={{ width: 34, height: 34, borderRadius: 9, objectFit: "cover" }} />
+          <img src="/PetFullLogo.jpg" alt="PetFull logo" style={{ width: 34, height: 34, borderRadius: 9, objectFit: "cover" }} />
           <div>
             <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 17, color: "var(--text)", lineHeight: 1 }}>PetFull</p>
             <p style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>Recipient Portal</p>

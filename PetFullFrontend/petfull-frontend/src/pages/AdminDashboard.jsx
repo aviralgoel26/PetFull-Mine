@@ -662,7 +662,7 @@ export default function AdminDashboard() {
         {/* Sidebar */}
         <aside style={{ width:220, minHeight:"100vh", background:"#fff", borderRight:"1px solid #e8ecf2", display:"flex", flexDirection:"column", position:"fixed", top:0, left:0, zIndex:100, boxShadow:"1px 0 8px rgba(0,0,0,0.04)" }}>
           <div style={{ padding:"20px 18px 16px", borderBottom:"1px solid #f1f5f9", display:"flex", alignItems:"center", gap:10 }}>
-            <img src="/cd068eaa-4022-44b6-a781-b530207b1a91.jpg" alt="PetFull logo" style={{ width: 38, height: 38, borderRadius: 10, objectFit: "cover" }} />
+            <img src="/PetFullLogo.jpg" alt="PetFull logo" style={{ width: 38, height: 38, borderRadius: 10, objectFit: "cover" }} />
             <div>
               <div style={{ fontSize:16, fontWeight:800, color:"#f97316", letterSpacing:-0.3, fontFamily:"'DM Serif Display',serif" }}>PetFull</div>
               <div style={{ fontSize:11, color:"#94a3b8", fontWeight:500 }}>Admin Portal</div>
