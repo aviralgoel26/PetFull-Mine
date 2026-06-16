@@ -20,19 +20,28 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+        try {
+            System.out.println("🔍 Login attempt for email: " + loginRequest.getEmail());
+            System.out.println("🔍 Password provided: " + (loginRequest.getPassword() != null ? "YES" : "NO"));
+            
+            User user = userRepository.findByEmail(loginRequest.getEmail());
+            System.out.println("🔍 Query result: " + (user != null ? "User found - " + user.getFullName() : "User not found"));
 
-        User user = userRepository.findByEmail(loginRequest.getEmail());
+            if (user == null) {
+                return ResponseEntity.status(404).body("User not found");
+            }
 
-        if (user == null) {
-            return ResponseEntity.status(404).body("User not found");
+            if (!user.getPassword().equals(loginRequest.getPassword())) {
+                return ResponseEntity.status(401).body("Invalid password");
+            }
+
+            // Return full user object so frontend can save it to localStorage correctly
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            System.out.println("❌ Exception in loginUser: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Login error: " + e.getMessage());
         }
-
-        if (!user.getPassword().equals(loginRequest.getPassword())) {
-            return ResponseEntity.status(401).body("Invalid password");
-        }
-
-        // Return full user object so frontend can save it to localStorage correctly
-        return ResponseEntity.ok(user);
     }
 
     // ── Register ──────────────────────────────────────────────────────────────
