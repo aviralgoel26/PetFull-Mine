@@ -33,8 +33,8 @@ public class Donation {
 
     // ── Relationships ─────────────────────────────────────────────────────────
 
-    private Long donor_id; // Reference to User._id
-    private Long claimedBy_id; // Reference to User._id who claimed this donation
+    private Long donorId; // Reference to User._id
+    private Long claimedById; // Reference to User._id who claimed this donation
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -83,9 +83,9 @@ public class Donation {
     public String getVideoPath() { return videoPath; }
     public void setVideoPath(String videoPath) { this.videoPath = videoPath; }
 
-    public Long getDonor_id() { return donor_id; }
-    public void setDonor_id(Long donor_id) { this.donor_id = donor_id; }
+    public Long getDonorId() { return donorId; }
+    public void setDonorId(Long donorId) { this.donorId = donorId; }
 
-    public Long getClaimedBy_id() { return claimedBy_id; }
-    public void setClaimedBy_id(Long claimedBy_id) { this.claimedBy_id = claimedBy_id; }
+    public Long getClaimedById() { return claimedById; }
+    public void setClaimedById(Long claimedById) { this.claimedById = claimedById; }
 }
