@@ -24,7 +24,7 @@ public class User {
     
     @Field("email")
     private String email; // MongoDB handles unique validation differently
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // Don't serialize password in responses -- password not be sent to frontend, but can be accepted in requests
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY) // Accept password in requests, but don't serialize in responses
     private String password;
     private String role; /// DONOR, RECIPIENT, ADMIN
     private String donorStatus="UNVERIFIED"; // Donor status default is UNVERIFIED
