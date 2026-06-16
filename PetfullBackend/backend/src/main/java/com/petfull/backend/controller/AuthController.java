@@ -24,6 +24,9 @@ public class AuthController {
             System.out.println("🔍 Login attempt for email: " + loginRequest.getEmail());
             System.out.println("🔍 Password provided: " + (loginRequest.getPassword() != null ? "YES" : "NO"));
             
+            // Debug: Print first 3 users from database
+            System.out.println("🔍 Checking database - Total users: " + userRepository.count());
+            
             User user = userRepository.findByEmail(loginRequest.getEmail());
             System.out.println("🔍 Query result: " + (user != null ? "User found - " + user.getFullName() : "User not found"));
 
