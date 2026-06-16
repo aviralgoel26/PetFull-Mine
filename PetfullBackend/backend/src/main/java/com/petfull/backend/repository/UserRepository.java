@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository; // Import Repository annotatio
 
 @Repository // Marks this interface as a Spring Data repository
 public interface UserRepository extends MongoRepository<User, Long> {
-    @Query("{ 'email' : ?0 }")
+    @Query("{ email: ?0 }")
     User findByEmail(String email);
 }
 //give me :-
