@@ -3,6 +3,7 @@ package com.petfull.backend.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import java.time.LocalDateTime;
 
 @Document(collection = "donations")
@@ -33,7 +34,10 @@ public class Donation {
 
     // ── Relationships ─────────────────────────────────────────────────────────
 
+    @Field("donorId")
     private Long donorId; // Reference to User._id
+    
+    @Field("claimedById")
     private Long claimedById; // Reference to User._id who claimed this donation
 
     // ── Constructor ───────────────────────────────────────────────────────────

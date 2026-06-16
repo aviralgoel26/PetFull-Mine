@@ -8,6 +8,7 @@
 package com.petfull.backend.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.aot.generate.GeneratedTypeReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,7 +18,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class User {
     @Id // Primary key
     private Long id;
+    
+    @Field("fullName")
     private String fullName;
+    
+    @Field("email")
     private String email; // MongoDB handles unique validation differently
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // Don't serialize password in responses -- password not be sent to frontend, but can be accepted in requests
     private String password;
