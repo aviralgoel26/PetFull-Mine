@@ -1,20 +1,17 @@
 package com.petfull.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "donations")
+@Document(collection = "donations")
 public class Donation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String foodName;
-
-    @Column(length = 500)
     private String description;
 
     private double quantity;
@@ -36,15 +33,8 @@ public class Donation {
 
     // ── Relationships ─────────────────────────────────────────────────────────
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "donor_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "donations"})
-    private User donor;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "claimed_by")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "donations"})
-    private User claimedBy;
+    private Long donor_id; // Reference to User._id
+    private Long claimedBy_id; // Reference to User._id who claimed this donation
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -93,9 +83,9 @@ public class Donation {
     public String getVideoPath() { return videoPath; }
     public void setVideoPath(String videoPath) { this.videoPath = videoPath; }
 
-    public User getDonor() { return donor; }
-    public void setDonor(User donor) { this.donor = donor; }
+    public Long getDonor_id() { return donor_id; }
+    public void setDonor_id(Long donor_id) { this.donor_id = donor_id; }
 
-    public User getClaimedBy() { return claimedBy; }
-    public void setClaimedBy(User claimedBy) { this.claimedBy = claimedBy; }
+    public Long getClaimedBy_id() { return claimedBy_id; }
+    public void setClaimedBy_id(Long claimedBy_id) { this.claimedBy_id = claimedBy_id; }
 }

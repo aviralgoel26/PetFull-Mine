@@ -1,24 +1,28 @@
+
+///The User class is a JPA Entity that maps your Java object to the users table in MySQL.
+///It defines the data model for authentication, authorization, and donor/recipient behavior in your platform.
+///This class is also used by Jackson (JSON) to serialize/deserialize data between your React frontend and backend.
+
+
+
 package com.petfull.backend.model;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.aot.generate.GeneratedTypeReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
-@Entity
-@Table(name="users")
+
+@Document(collection="users") // Maps to "users" collection in MongoDB
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    @Id // Primary key
+    private Long id;
     private String fullName;
-    @Column(unique = true)
-    private String email;
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String email; // MongoDB handles unique validation differently
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // Don't serialize password in responses -- password not be sent to frontend, but can be accepted in requests
     private String password;
     private String role; /// DONOR, RECIPIENT, ADMIN
-    @Column(nullable = false)
-    private String donorStatus="UNVERIFIED";
+    private String donorStatus="UNVERIFIED"; // Donor status default is UNVERIFIED
     private String phone;
     private String address;
     private String city;
@@ -40,6 +44,9 @@ public class User {
         this.pincode=pincode;
     }
      /// ---Getters and Setters---///
+     /// Getters and setter provides encapsulation, allowing controlled access to private fields.
+     //  They enable validation, transformation, and maintainability of the code by centralizing access logic. 
+     // This promotes data integrity and flexibility in how fields are accessed and modified.
      public Long getId() { return id; }
 
     public String getFullName() { return fullName; }

@@ -1,0 +1,41 @@
+[
+  {
+    "_id": 1,
+    "fullName": "Aviral Goel",
+    "email": "aviralgoel9th@gmail.com",
+    "password": "123456",
+    "role": "DONOR",
+    "donorStatus": "VERIFIED",
+    "phone": "08923138251",
+    "address": "Avas Vikas",
+    "city": "Chandausi",
+    "state": "Uttar Pradesh",
+    "pincode": "244412"
+  },
+  {
+    "_id": 2,
+    "fullName": "Recipient",
+    "email": "recipient@example.com",
+    "password": "password",
+    "role": "RECIPIENT",
+    "donorStatus": "UNVERIFIED",
+    "phone": "08923138251",
+    "address": "Avas Vikas",
+    "city": "Chandausi",
+    "state": "Uttar Pradesh",
+    "pincode": "244412"
+  },
+  {
+    "_id": 4,
+    "fullName": "Shorya",
+    "email": "shorya@donor.com",
+    "password": "password",
+    "role": "DONOR",
+    "donorStatus": "VERIFIED",
+    "phone": "09876543211",
+    "address": "LPU",
+    "city": "Jalandhar",
+    "state": "Punjab",
+    "pincode": "144001"
+  }
+]

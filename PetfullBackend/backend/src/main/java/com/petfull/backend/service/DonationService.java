@@ -24,14 +24,15 @@ public class DonationService {
     // ── Create ────────────────────────────────────────────────────────────────
 
     public Donation createDonation(Donation donation, Long userId) {
-        User donor = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        // Verify user exists
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("User not found with id: " + userId);
+        }
 
-        donation.setDonor(donor);
+        donation.setDonor_id(userId);
         donation.setStatus("AVAILABLE");
 
         Donation saved = donationRepository.save(donation);
-        donationRepository.flush();
 
         return donationRepository.findById(saved.getId())
                 .orElseThrow(() -> new RuntimeException("Failed to reload donation after save"));
@@ -81,15 +82,17 @@ public class DonationService {
         }
 
         // Prevent a donor from claiming their own donation
-        if (donation.getDonor().getId().equals(userId)) {
+        if (donation.getDonor_id().equals(userId)) {
             throw new RuntimeException("You cannot claim your own donation");
         }
 
-        User claimer = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        // Verify claimer exists
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("User not found: " + userId);
+        }
 
         donation.setStatus("CLAIMED");
-        donation.setClaimedBy(claimer);
+        donation.setClaimedBy_id(userId);
 
         return donationRepository.save(donation);
     }
@@ -100,7 +103,7 @@ public class DonationService {
         Donation donation = donationRepository.findById(donationId)
                 .orElseThrow(() -> new RuntimeException("Donation not found: " + donationId));
 
-        if (!donation.getDonor().getId().equals(userId)) {
+        if (!donation.getDonor_id().equals(userId)) {
             throw new SecurityException(
                 "User " + userId + " is not authorized to delete donation " + donationId
             );
