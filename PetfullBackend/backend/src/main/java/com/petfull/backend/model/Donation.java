@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 
 @Document(collection = "donations")
 public class Donation {
+    public static final String SEQUENCE_NAME = "donations_sequence";
 
     @Id
     private Long id;
@@ -34,10 +35,10 @@ public class Donation {
 
     // ── Relationships ─────────────────────────────────────────────────────────
 
-    @Field("donorId")
+    @Field("donor_id")
     private Long donorId; // Reference to User._id
     
-    @Field("claimedById")
+    @Field("claimedBy_id")
     private Long claimedById; // Reference to User._id who claimed this donation
 
     // ── Constructor ───────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ public class Donation {
     // ── Getters & Setters ─────────────────────────────────────────────────────
 
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public String getFoodName() { return foodName; }
     public void setFoodName(String foodName) { this.foodName = foodName; }

@@ -10,7 +10,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/debug")
-@CrossOrigin(origins = "*")
+@CrossOrigin
 public class DebugController {
 
     private final UserRepository userRepository;

@@ -9,7 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/donations")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin
 public class DonationController {
 
     private final DonationService donationService;

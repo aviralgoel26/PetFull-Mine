@@ -16,6 +16,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Document(collection="users") // Maps to "users" collection in MongoDB
 public class User {
+    public static final String SEQUENCE_NAME = "users_sequence";
+
     @Id // Primary key
     private Long id;
     
@@ -53,6 +55,7 @@ public class User {
      //  They enable validation, transformation, and maintainability of the code by centralizing access logic. 
      // This promotes data integrity and flexibility in how fields are accessed and modified.
      public Long getId() { return id; }
+     public void setId(Long id) { this.id = id; }
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
